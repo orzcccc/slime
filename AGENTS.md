@@ -1,5 +1,13 @@
 # 协作约定
 
+## 项目规则
+
+- 开始任何任务前，先阅读 `.cursor/rules/` 下的全部规则文件并遵守：
+  - `commercial-pc-standards.mdc`：本项目按正规 PC 商业项目标准开发，包括任务完成定义、质量基线和上线阻塞项。
+  - `development-plan-documentation.mdc`：方案与实现必须同步到 `Docs/`。
+  - `unity-prefab-authoring.mdc`：Prefab 的创建与修改方式。
+- 规则之间冲突时，以用户的明确指示为准，并在交付说明中指出冲突。
+
 ## Git 提交
 
 - 每完成一项修改任务后，由助手自动提交并推送到 `origin main`（https://github.com/orzcccc/slime.git），无需再次询问。
