@@ -4,6 +4,7 @@ using SlimeBlindBox.Networking;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 namespace SlimeBlindBox.UI
 {
@@ -17,13 +18,13 @@ namespace SlimeBlindBox.UI
         private static readonly Color BorderColor = new Color32(119, 100, 170, 255);
         private static readonly Color TextColor = new Color32(240, 238, 255, 255);
         private static readonly Color MutedTextColor = new Color32(183, 176, 211, 255);
-        private static Font runtimeFont;
+        private static TMP_FontAsset runtimeFont;
         private SlimeGameController controller;
-        private Text playerText;
-        private Text boxText;
-        private Text timerText;
-        private Text messageText;
-        private Text resourceText;
+        private TMP_Text playerText;
+        private TMP_Text boxText;
+        private TMP_Text timerText;
+        private TMP_Text messageText;
+        private TMP_Text resourceText;
         private Transform inventoryContent;
         private Transform dictionaryContent;
         private Transform guildContent;
@@ -99,7 +100,7 @@ namespace SlimeBlindBox.UI
                 return;
             }
 
-            foreach (var text in instance.GetComponentsInChildren<Text>(true))
+            foreach (var text in instance.GetComponentsInChildren<TMP_Text>(true))
                 if (runtimeFont != null) text.font = runtimeFont;
 
             playerText = refs.playerText;
@@ -231,7 +232,7 @@ namespace SlimeBlindBox.UI
                 if (ColorUtility.TryParseHtmlString(box.color, out var color))
                 {
                     button.GetComponent<Image>().color = new Color(color.r, color.g, color.b, key == selectedBoxKey ? 1f : .28f);
-                    var label = button.GetComponentInChildren<Text>();
+                    var label = button.GetComponentInChildren<TMP_Text>();
                     if (label != null)
                     {
                         label.rectTransform.anchorMin = new Vector2(.34f, 0);
@@ -294,7 +295,7 @@ namespace SlimeBlindBox.UI
         private void RenderInventory()
         {
             Clear(inventoryContent);
-            if (controller.Inventory.Length == 0) CreateText(inventoryContent, "暂无史莱姆", 18, TextAnchor.MiddleCenter);
+            if (controller.Inventory.Length == 0) CreateText(inventoryContent, "暂无史莱姆", 18, TextAlignmentOptions.Center);
             var totalPages = Mathf.Max(1, Mathf.CeilToInt(controller.Inventory.Length / (float)InventoryPageSize));
             inventoryPageIndex = Mathf.Clamp(inventoryPageIndex, 0, totalPages - 1);
             if (uiRefs != null)
@@ -311,7 +312,7 @@ namespace SlimeBlindBox.UI
                 var template = Resources.Load<GameObject>("UI/InventoryItem");
                 var row = template != null ? Instantiate(template, inventoryContent) : Panel(inventoryContent, $"Slime_{item.slime_id}", PanelAltColor);
                 row.name = $"Slime_{item.slime_id}";
-                foreach (var text in row.GetComponentsInChildren<Text>(true)) if (runtimeFont != null) text.font = runtimeFont;
+                foreach (var text in row.GetComponentsInChildren<TMP_Text>(true)) if (runtimeFont != null) text.font = runtimeFont;
                 var view = row.GetComponent<InventoryItemView>();
                 if (view == null) continue;
                 view.nameText.text = $"{item.name} [{item.rarity}]";
@@ -338,10 +339,10 @@ namespace SlimeBlindBox.UI
             Clear(dictionaryContent);
             var data = controller.Dictionary;
             if (data == null) return;
-            CreateText(dictionaryContent, $"收集进度：{data.discovered}/{data.total}（{data.completion:P0}）", 20, TextAnchor.MiddleCenter);
+            CreateText(dictionaryContent, $"收集进度：{data.discovered}/{data.total}（{data.completion:P0}）", 20, TextAlignmentOptions.Center);
             foreach (var item in data.entries)
             {
-                var label = CreateText(dictionaryContent, item.discovered == 1 ? $"已发现  {item.name} [{item.rarity}]" : $"未发现  ??? [{item.rarity}]", 17, TextAnchor.MiddleLeft);
+                var label = CreateText(dictionaryContent, item.discovered == 1 ? $"已发现  {item.name} [{item.rarity}]" : $"未发现  ??? [{item.rarity}]", 17, TextAlignmentOptions.MidlineLeft);
                 ApplyRarity(label, item.rarity_key, item.rarity_color);
             }
         }
@@ -352,17 +353,17 @@ namespace SlimeBlindBox.UI
             var data = controller.Guild;
             if (data == null || !data.has_guild)
             {
-                CreateText(guildContent, "尚未加入公会", 20, TextAnchor.MiddleCenter);
+                CreateText(guildContent, "尚未加入公会", 20, TextAlignmentOptions.Center);
                 Button(guildContent, "创建个人公会", controller.CreateGuild);
                 return;
             }
-            CreateText(guildContent, $"{data.guild.name}  资金 {data.guild.funds}  公会币 {data.guild_coins}", 20, TextAnchor.MiddleCenter);
-            CreateText(guildContent, $"魔力节点 Lv.{data.guild.magic_level}  扩容 Lv.{data.guild.capacity_level}", 17, TextAnchor.MiddleCenter);
+            CreateText(guildContent, $"{data.guild.name}  资金 {data.guild.funds}  公会币 {data.guild_coins}", 20, TextAlignmentOptions.Center);
+            CreateText(guildContent, $"魔力节点 Lv.{data.guild.magic_level}  扩容 Lv.{data.guild.capacity_level}", 17, TextAlignmentOptions.Center);
             Button(guildContent, "升级魔力节点", () => controller.UpgradeGuild("magic"));
             Button(guildContent, "升级扩容", () => controller.UpgradeGuild("capacity"));
             if (data.boss != null)
             {
-                CreateText(guildContent, $"史莱姆王饥饿度：{data.boss.current_hunger}/{data.boss.max_hunger}", 18, TextAnchor.MiddleCenter);
+                CreateText(guildContent, $"史莱姆王饥饿度：{data.boss.current_hunger}/{data.boss.max_hunger}", 18, TextAlignmentOptions.Center);
                 Button(guildContent, "今日投喂", controller.FeedBoss);
             }
             foreach (var item in controller.Inventory)
@@ -379,7 +380,7 @@ namespace SlimeBlindBox.UI
             var vertical = panel.AddComponent<VerticalLayoutGroup>();
             vertical.padding = new RectOffset(12, 12, 12, 12);
             vertical.spacing = 6;
-            CreateText(panel.transform, title, 23, TextAnchor.MiddleCenter);
+            CreateText(panel.transform, title, 23, TextAlignmentOptions.Center);
             var content = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
             content.transform.SetParent(panel.transform, false);
             content.GetComponent<VerticalLayoutGroup>().spacing = 5;
@@ -414,11 +415,11 @@ namespace SlimeBlindBox.UI
             return panel;
         }
 
-        private static Text CreateText(Transform parent, string value, int size, TextAnchor alignment)
+        private static TMP_Text CreateText(Transform parent, string value, int size, TextAlignmentOptions alignment)
         {
-            var textObject = new GameObject("Text", typeof(RectTransform), typeof(Text), typeof(LayoutElement));
+            var textObject = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
             textObject.transform.SetParent(parent, false);
-            var text = textObject.GetComponent<Text>();
+            var text = textObject.GetComponent<TextMeshProUGUI>();
             if (runtimeFont != null) text.font = runtimeFont;
             text.text = value;
             text.fontSize = size;
@@ -428,7 +429,7 @@ namespace SlimeBlindBox.UI
             return text;
         }
 
-        private static void ApplyRarity(Text label, string rarityKey, string rarityColor)
+        private static void ApplyRarity(TMP_Text label, string rarityKey, string rarityColor)
         {
             if (label == null || string.IsNullOrEmpty(rarityKey)) return;
             label.gameObject.AddComponent<RarityTextEffect>().Initialize(label, rarityKey, rarityColor);
@@ -447,7 +448,7 @@ namespace SlimeBlindBox.UI
             colors.colorMultiplier = 1;
             button.colors = colors;
             button.onClick.AddListener(action);
-            CreateText(buttonObject.transform, label, 19, TextAnchor.MiddleCenter);
+            CreateText(buttonObject.transform, label, 19, TextAlignmentOptions.Center);
             buttonObject.AddComponent<LayoutElement>().preferredWidth = 130;
             return button;
         }
@@ -456,13 +457,13 @@ namespace SlimeBlindBox.UI
         {
             var showcase = Panel(parent, "SlimeShowcase", PanelAltColor);
             showcase.AddComponent<LayoutElement>().preferredHeight = 180;
-            var label = CreateText(showcase.transform, "史莱姆培养皿", 24, TextAnchor.UpperCenter);
+            var label = CreateText(showcase.transform, "史莱姆培养皿", 24, TextAlignmentOptions.Top);
             Stretch(label.rectTransform);
 
             var sprites = Resources.LoadAll<Sprite>("PixelAdventure/SlimeIdle");
             if (sprites == null || sprites.Length == 0)
             {
-                CreateText(showcase.transform, "Pixel Adventure 2 Slime", 20, TextAnchor.MiddleCenter).color = MutedTextColor;
+                CreateText(showcase.transform, "Pixel Adventure 2 Slime", 20, TextAlignmentOptions.Center).color = MutedTextColor;
                 return;
             }
 

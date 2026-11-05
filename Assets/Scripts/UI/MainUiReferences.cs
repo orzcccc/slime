@@ -1,15 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace SlimeBlindBox.UI
 {
     public sealed class MainUiReferences : MonoBehaviour
     {
-        public Text playerText;
-        public Text resourceText;
-        public Text boxText;
-        public Text timerText;
-        public Text messageText;
+        public TMP_Text playerText;
+        public TMP_Text resourceText;
+        public TMP_Text boxText;
+        public TMP_Text timerText;
+        public TMP_Text messageText;
         public Button openButton;
         public Button claimButton;
         public Button settingsButton;
@@ -29,7 +30,7 @@ namespace SlimeBlindBox.UI
         public Button boxTab;
         public Button inventoryPreviousPage;
         public Button inventoryNextPage;
-        public Text inventoryPageText;
+        public TMP_Text inventoryPageText;
         public Button dictionaryTab;
         public Button guildTab;
         public Button gmAddOne;
@@ -38,9 +39,9 @@ namespace SlimeBlindBox.UI
         public Button gmClear;
         public Button gmAdvance;
         public Image selectedBoxImage;
-        public Text selectedBoxName;
-        public Text selectedBoxCount;
-        public Text boxOpenHint;
+        public TMP_Text selectedBoxName;
+        public TMP_Text selectedBoxCount;
+        public TMP_Text boxOpenHint;
         public Button selectedBoxOpenButton;
     }
 }

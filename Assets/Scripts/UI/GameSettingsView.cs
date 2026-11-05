@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace SlimeBlindBox.UI
 {
@@ -10,11 +11,11 @@ namespace SlimeBlindBox.UI
     {
         public Button closeButton;
         public Button exitButton;
-        public Text statusText;
+        public TMP_Text statusText;
 
-        public void Initialize(Font font)
+        public void Initialize(TMP_FontAsset font)
         {
-            foreach (var text in GetComponentsInChildren<Text>(true))
+            foreach (var text in GetComponentsInChildren<TMP_Text>(true))
                 if (font != null) text.font = font;
 
             if (statusText != null) statusText.text = "按住岛屿可拖动游戏到桌面任意位置";

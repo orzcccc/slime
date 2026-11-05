@@ -1,15 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace SlimeBlindBox.UI
 {
     internal sealed class RarityTextEffect : MonoBehaviour
     {
-        private Text label;
+        private TMP_Text label;
         private string rarityKey;
         private Color baseColor;
 
-        public void Initialize(Text target, string key, string hexColor)
+        public void Initialize(TMP_Text target, string key, string hexColor)
         {
             label = target;
             rarityKey = key;

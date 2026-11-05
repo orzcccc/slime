@@ -135,7 +135,7 @@ xxxScroll        ScrollRect（movementType = Clamped）
 现有 `MainUI.prefab` 和 `GameSettings.prefab` 按旧方案制作，与本框架的差异如下，直接修改预制文件逐项迁移：
 
 - [x] 导入项目字体 `KeinannMaruPOP.ttf`；现有 uGUI `Text` 已全部改用该字体，运行时不再取系统微软雅黑（缺失时才回退并报错）。
-- [ ] 用 `KeinannMaruPOP.ttf` 生成 TMP 字体资产，替换 uGUI `Text`。
+- [x] 用 `KeinannMaruPOP.ttf` 生成动态 SDF TMP 字体资产 `Assets/Resources/Fonts/KeinannMaruPOP SDF.asset`，并将主界面、设置弹窗、背包项、盲盒品质项及运行时动态文本迁移为 `TextMeshProUGUI`。
 - [ ] 核验荆南麦圆体的商用与再分发授权，保存作者授权声明并记入授权清单。
 - [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`；CanvasScaler 改为 `800×800`、match `0.5`。
 - [ ] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。

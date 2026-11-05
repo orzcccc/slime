@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
+using TMPro;
 
 namespace SlimeBlindBox.Desktop
 {
@@ -122,7 +123,7 @@ namespace SlimeBlindBox.Desktop
                 var graphic = result.gameObject.GetComponent<Graphic>();
                 if (graphic == null || !graphic.enabled) continue;
                 // 文字的射线区域是整个矩形，不能代表实际可见内容，按透明处理。
-                if (graphic is Text) continue;
+                if (graphic is TMP_Text) continue;
                 if (graphic.color.a <= VisibleAlphaThreshold) continue;
                 if (graphic.canvasRenderer.GetInheritedAlpha() <= VisibleAlphaThreshold) continue;
                 hit = result.gameObject;
