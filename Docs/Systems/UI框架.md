@@ -15,7 +15,7 @@
 | CanvasScaler match | `0.5` |
 | 第二种比例检查 | 不适用；高 DPI 缩放规则确定后补充（待确认） |
 | 预览图性质 | 高保真效果图 |
-| 切图 | 部分已有（`Assets/Resources/icon/`、Sweet Land GUI）；缺图处用纯色 Image |
+| 切图 | 主界面切图见 [主界面切图资源](主界面切图资源.md)（`Assets/Resources/Sprites/MainPage/`）；另有 Sweet Land GUI；缺图处用纯色 Image |
 | 文字组件 | `TextMeshProUGUI`；前置任务：用项目字体生成中文 TMP 字体资产 |
 | 字体 | 荆南麦圆体 `KeinannMaruPOP`，文件 `Assets/Resources/Fonts/KeinannMaruPOP.ttf`（已导入；授权待核验） |
 
