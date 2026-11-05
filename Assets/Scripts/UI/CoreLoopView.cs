@@ -25,20 +25,15 @@ namespace SlimeBlindBox.UI
         private Text messageText;
         private Text resourceText;
         private Transform inventoryContent;
-        private Transform leaderboardContent;
         private Transform dictionaryContent;
         private Transform guildContent;
         private Transform boxInventoryContent;
-        private Transform equipmentContent;
         private Transform boxQualityContent;
         private GameObject cultivatePanel;
         private GameObject inventoryPanel;
-        private GameObject inventorySlimePanel;
-        private GameObject inventoryEquipmentPanel;
         private GameObject boxPanel;
         private GameObject dictionaryPanel;
         private GameObject guildPanel;
-        private GameObject leaderboardPanel;
         private Button openButton;
         private DateTime nextBoxAt;
         private bool isUiReady;
@@ -118,30 +113,22 @@ namespace SlimeBlindBox.UI
             dictionaryContent = refs.dictionaryContent;
             guildContent = refs.guildContent;
             boxInventoryContent = refs.boxInventoryContent;
-            equipmentContent = refs.equipmentContent;
             boxQualityContent = refs.boxQualityContent;
-            leaderboardContent = refs.leaderboardContent;
             cultivatePanel = refs.homePage;
             inventoryPanel = refs.inventoryPage;
-            inventorySlimePanel = refs.inventorySlimePanel;
-            inventoryEquipmentPanel = refs.inventoryEquipmentPanel;
             boxPanel = refs.boxPage;
             dictionaryPanel = refs.dictionaryPage;
             guildPanel = refs.guildPage;
-            leaderboardPanel = refs.leaderboardPage;
             uiRefs = refs;
 
             refs.claimButton.onClick.AddListener(controller.ClaimBoxes);
             refs.homeTab.onClick.AddListener(() => ShowTab(cultivatePanel));
             refs.inventoryTab.onClick.AddListener(() => ShowTab(inventoryPanel));
             refs.boxTab.onClick.AddListener(() => ShowTab(boxPanel));
-            refs.inventorySlimeTab.onClick.AddListener(() => ShowInventoryTab(inventorySlimePanel));
-            refs.inventoryEquipmentTab.onClick.AddListener(() => ShowInventoryTab(inventoryEquipmentPanel));
             refs.inventoryPreviousPage.onClick.AddListener(() => ChangeInventoryPage(-1));
             refs.inventoryNextPage.onClick.AddListener(() => ChangeInventoryPage(1));
             refs.dictionaryTab.onClick.AddListener(() => ShowTab(dictionaryPanel));
             refs.guildTab.onClick.AddListener(() => ShowTab(guildPanel));
-            refs.leaderboardTab.onClick.AddListener(() => ShowTab(leaderboardPanel));
             refs.gmAddOne.onClick.AddListener(() => controller.GmBoxes("add", 1));
             refs.gmAddEight.onClick.AddListener(() => controller.GmBoxes("add", 8));
             refs.gmFill.onClick.AddListener(() => controller.GmBoxes("fill", 0));
@@ -167,7 +154,6 @@ namespace SlimeBlindBox.UI
                 animator.Initialize(refs.slimeImage, frames);
             }
             ShowTab(cultivatePanel);
-            ShowInventoryTab(inventorySlimePanel);
         }
 
         private void InitializeSettings(Transform uiRoot, MainUiReferences refs)
@@ -197,7 +183,7 @@ namespace SlimeBlindBox.UI
         {
             if (!isUiReady || controller == null || playerText == null || boxText == null
                 || messageText == null || openButton == null || inventoryContent == null
-                || leaderboardContent == null || dictionaryContent == null || guildContent == null)
+                || dictionaryContent == null || guildContent == null)
             {
                 return;
             }
@@ -206,7 +192,7 @@ namespace SlimeBlindBox.UI
             var state = controller.GameState;
             playerText.text = user == null ? "开发账号登录中……" : $"玩家：{user.nickname}";
             if (resourceText != null && user != null)
-                resourceText.text = $"CP  {state?.total_cp ?? user.total_cp}    残渣  {state?.residue ?? user.residue}";
+                resourceText.text = $"CP  {state?.total_cp ?? user.total_cp}";
             boxText.text = state == null ? "盲盒：--" : $"盲盒：{state.box_count} / {state.box_capacity}";
             messageText.text = controller.IsBusy ? "处理中……" : controller.LastMessage;
             openButton.interactable = !controller.IsBusy && state != null && state.box_count > 0;
@@ -220,7 +206,6 @@ namespace SlimeBlindBox.UI
                     out nextBoxAt);
             }
             RenderInventory();
-            RenderLeaderboard();
             RenderDictionary();
             RenderGuild();
             RenderBoxInventory();
@@ -335,9 +320,6 @@ namespace SlimeBlindBox.UI
                 var slimeFrames = Resources.LoadAll<Sprite>("PixelAdventure/SlimeIdle");
                 if (slimeFrames.Length > 0) view.icon.sprite = slimeFrames[Mathf.Abs(item.slime_id) % slimeFrames.Length];
                 if (ColorUtility.TryParseHtmlString(item.rarity_color, out var iconColor)) view.icon.color = Color.Lerp(Color.white, iconColor, .3f);
-                var capturedId = item.slime_id;
-                view.mergeButton.onClick.AddListener(() => controller.Merge(capturedId));
-                view.mergeButton.interactable = !controller.IsBusy && item.quantity >= 5;
             }
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(inventoryContent as RectTransform);
@@ -390,17 +372,6 @@ namespace SlimeBlindBox.UI
             }
         }
 
-        private void RenderLeaderboard()
-        {
-            Clear(leaderboardContent);
-            if (controller.Leaderboard.Length == 0) CreateText(leaderboardContent, "暂无排行数据", 18, TextAnchor.MiddleCenter);
-            for (var i = 0; i < controller.Leaderboard.Length; i++)
-            {
-                var item = controller.Leaderboard[i];
-                CreateText(leaderboardContent, $"{i + 1}. {item.nickname}    {item.total_cp} CP", 17, TextAnchor.MiddleLeft);
-            }
-        }
-
         private static Transform CreateList(Transform parent, string title)
         {
             var panel = Panel(parent, title, PanelColor);
@@ -428,14 +399,8 @@ namespace SlimeBlindBox.UI
 
         private void ShowTab(GameObject target)
         {
-            var pages = new[] { cultivatePanel, inventoryPanel, boxPanel, dictionaryPanel, guildPanel, leaderboardPanel };
+            var pages = new[] { cultivatePanel, inventoryPanel, boxPanel, dictionaryPanel, guildPanel };
             foreach (var page in pages) if (page != null) page.SetActive(page == target);
-        }
-
-        private void ShowInventoryTab(GameObject target)
-        {
-            if (inventorySlimePanel != null) inventorySlimePanel.SetActive(target == inventorySlimePanel);
-            if (inventoryEquipmentPanel != null) inventoryEquipmentPanel.SetActive(target == inventoryEquipmentPanel);
         }
 
         private static GameObject Panel(Transform parent, string name, Color color)

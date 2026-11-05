@@ -49,7 +49,7 @@ test('新账号获得一个初始盲盒并返回权威时间', async () => {
   assert.equal(response.status, 200);
   assert.equal(response.body.box_count, 1);
   assert.equal(response.body.box_capacity, 8);
-  assert.equal(response.body.residue, 0);
+  assert.equal(response.body.residue, undefined);
   assert.ok(response.body.server_time);
   assert.ok(response.body.next_box_at);
 });
@@ -75,24 +75,6 @@ test('登录、开箱并读取库存', async () => {
   assert.equal(inventory.body.inventory[0].quantity, 1);
 });
 
-test('库存不足时融合失败且不扣除库存', async () => {
-  const before = await request(app)
-    .get('/api/user/inventory')
-    .set('Authorization', `Bearer ${token}`);
-  const slime = before.body.inventory[0];
-
-  const merged = await request(app)
-    .post('/api/game/merge')
-    .set('Authorization', `Bearer ${token}`)
-    .send({ consume_slimes: [{ slime_id: slime.slime_id, count: 5 }] });
-  assert.equal(merged.status, 409);
-
-  const after = await request(app)
-    .get('/api/user/inventory')
-    .set('Authorization', `Bearer ${token}`);
-  assert.equal(after.body.inventory[0].quantity, slime.quantity);
-});
-
 test('无盲盒时拒绝开箱且库存不变', async () => {
   const user = await db.get("SELECT id FROM users WHERE steam_id = 'dev_tester'");
   await db.run('UPDATE users SET box_count = 0, last_box_at = ? WHERE id = ?', [new Date().toISOString(), user.id]);
@@ -112,37 +94,12 @@ test('离线盲盒补发并封顶', async () => {
   assert.equal(state.next_box_at, null);
 });
 
-test('确定性融合失败产生残渣并扣除五只库存', async () => {
-  const user = await db.get("SELECT id FROM users WHERE steam_id = 'dev_tester'");
-  await db.run('UPDATE user_inventory SET quantity = 0 WHERE user_id = ?', [user.id]);
-  await db.run('UPDATE user_slimes SET quantity = 0 WHERE user_id = ?', [user.id]);
-  await db.run(
-    `INSERT INTO user_inventory (user_id, slime_id, quantity) VALUES (?, 1, 5)
-     ON CONFLICT(user_id, slime_id) DO UPDATE SET quantity = 5`,
-    [user.id],
-  );
-  await db.run(
-    `INSERT INTO user_slimes (user_id, slime_id, quantity) VALUES (?, 1, 5)
-     ON CONFLICT(user_id, slime_id) DO UPDATE SET quantity = 5`,
-    [user.id],
-  );
-  await db.run('UPDATE users SET total_cp = 50, residue = 0 WHERE id = ?', [user.id]);
-  const service = createGameService({ randomInt: () => 0 });
-  const result = await service.mergeSlimes(user.id, [{ slime_id: 1, count: 5 }]);
-  assert.equal(result.success, false);
-  assert.equal(result.residue, 1);
-  assert.equal(result.total_cp, 0);
-  const inventory = await db.get('SELECT quantity FROM user_inventory WHERE user_id = ? AND slime_id = 1', [user.id]);
-  assert.equal(inventory.quantity, 0);
-});
-
-test('排行榜反映权威 CP', async () => {
-  const response = await request(app)
-    .get('/api/social/leaderboard')
-    .set('Authorization', `Bearer ${token}`);
-  assert.equal(response.status, 200);
-  assert.equal(response.body.leaderboard[0].nickname, 'tester');
-  assert.equal(response.body.leaderboard[0].total_cp, 0);
+test('已移除的融合与排行榜接口返回 404', async () => {
+  const merged = await request(app).post('/api/game/merge').set('Authorization', `Bearer ${token}`)
+    .send({ consume_slimes: [{ slime_id: 1, count: 5 }] });
+  assert.equal(merged.status, 404);
+  const leaderboard = await request(app).get('/api/social/leaderboard').set('Authorization', `Bearer ${token}`);
+  assert.equal(leaderboard.status, 404);
 });
 
 test('图鉴会记录已获得的史莱姆', async () => {

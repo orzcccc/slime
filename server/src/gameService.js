@@ -44,7 +44,6 @@ function createGameService({ database = db, now = () => new Date(), randomInt, c
     return {
       box_count: user.box_count,
       box_capacity: user.box_capacity,
-      residue: user.residue,
       total_cp: user.total_cp,
       server_time: currentTime.toISOString(),
       next_box_at: user.box_count >= user.box_capacity
@@ -56,7 +55,7 @@ function createGameService({ database = db, now = () => new Date(), randomInt, c
 
   async function settleUserState(tx, userId, currentTime) {
     const user = await tx.get(
-      `SELECT u.id, u.total_cp, u.box_count, u.box_capacity, u.last_box_at, u.residue,
+      `SELECT u.id, u.total_cp, u.box_count, u.box_capacity, u.last_box_at,
         COALESCE(g.magic_level, 0) AS magic_level
        FROM users u LEFT JOIN guild_members gm ON gm.user_id = u.id
        LEFT JOIN guilds g ON g.id = gm.guild_id WHERE u.id = ?`,
@@ -146,56 +145,7 @@ function createGameService({ database = db, now = () => new Date(), randomInt, c
     });
   }
 
-  function normalizeConsumeSlimes(input) {
-    if (!Array.isArray(input) || input.length === 0) return null;
-    const merged = new Map();
-    for (const item of input) {
-      if (!Number.isInteger(item?.slime_id) || !Number.isInteger(item?.count) || item.count <= 0) return null;
-      merged.set(item.slime_id, (merged.get(item.slime_id) || 0) + item.count);
-    }
-    return [...merged].map(([slimeId, count]) => ({ slimeId, count }));
-  }
-
-  async function mergeSlimes(userId, consumeInput) {
-    const items = normalizeConsumeSlimes(consumeInput);
-    if (!items || items.reduce((sum, item) => sum + item.count, 0) !== config.mergeRequiredCount) {
-      const error = new Error(`融合必须消耗 ${config.mergeRequiredCount} 只史莱姆`);
-      error.status = 400;
-      throw error;
-    }
-    return database.transaction(async (tx) => {
-      for (const item of items) {
-        const inventory = await tx.get(
-          `SELECT us.quantity, sd.base_cp FROM user_slimes us JOIN slime_dictionary sd ON sd.slime_id = us.slime_id
-           WHERE us.user_id = ? AND us.slime_id = ?`,
-          [userId, item.slimeId],
-        );
-        if (!inventory || inventory.quantity < item.count) {
-          const error = new Error(`史莱姆 ${item.slimeId} 库存不足`);
-          error.status = 409;
-          throw error;
-        }
-        await progression.removeSlime(tx, userId, item.slimeId, item.count);
-      }
-      const failed = random(1_000_000) < Math.floor(config.mergeFailureRate * 1_000_000);
-      if (failed) {
-        await tx.run('UPDATE users SET residue = residue + ? WHERE id = ?', [config.residuePerFailure, userId]);
-        const user = await tx.get('SELECT residue, total_cp FROM users WHERE id = ?', [userId]);
-        return { success: false, result_slime_id: null, result_name: null, result_rarity: null, is_mutation: false, residue_gained: config.residuePerFailure, ...user };
-      }
-
-      const mutation = random(1_000_000) < Math.floor(config.mutationRateOnSuccess * 1_000_000);
-      const candidates = mutation
-        ? await tx.all("SELECT * FROM slime_dictionary WHERE rarity_key IN ('SUPREME', 'DEMON_GOD')")
-        : await tx.all("SELECT * FROM slime_dictionary WHERE rarity_key NOT IN ('POOR', 'COMMON') AND drop_weight > 0");
-      const result = mutation ? candidates[random(candidates.length)] : weightedPick(candidates, random);
-      await progression.grantSlime(tx, userId, result.slime_id);
-      const user = await tx.get('SELECT residue, total_cp FROM users WHERE id = ?', [userId]);
-      return { success: true, result_slime_id: result.slime_id, result_name: result.name, result_rarity: result.rarity_name, result_rarity_key: result.rarity_key, result_rarity_color: result.rarity_color, is_mutation: mutation, residue_gained: 0, ...user };
-    });
-  }
-
-  return { getGameState, claimBoxes, openBox, mergeSlimes, settleBoxes };
+  return { getGameState, claimBoxes, openBox, settleBoxes };
 }
 
 const defaultService = createGameService();

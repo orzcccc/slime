@@ -21,7 +21,6 @@ namespace SlimeBlindBox.Networking
         public string steam_id;
         public string nickname;
         public int total_cp;
-        public int residue;
     }
 
     [Serializable]
@@ -38,39 +37,10 @@ namespace SlimeBlindBox.Networking
     }
 
     [Serializable]
-    public sealed class MergeRequest
-    {
-        public ConsumeSlimeDto[] consume_slimes;
-    }
-
-    [Serializable]
-    public sealed class ConsumeSlimeDto
-    {
-        public int slime_id;
-        public int count;
-    }
-
-    [Serializable]
-    public sealed class MergeResponse
-    {
-        public bool success;
-        public int result_slime_id;
-        public string result_name;
-        public string result_rarity;
-        public string result_rarity_key;
-        public string result_rarity_color;
-        public bool is_mutation;
-        public int residue_gained;
-        public int residue;
-        public int total_cp;
-    }
-
-    [Serializable]
     public sealed class GameStateDto
     {
         public int box_count;
         public int box_capacity;
-        public int residue;
         public int total_cp;
         public string server_time;
         public string next_box_at;
@@ -114,20 +84,6 @@ namespace SlimeBlindBox.Networking
     [Serializable] public sealed class UpgradeRequest { public string type; }
     [Serializable] public sealed class GmBoxesRequest { public string action; public int amount; }
     [Serializable] public sealed class ActionResponse { public bool success; public int damage; public int current_hunger; public bool completed; public int reward_boxes; }
-
-    [Serializable]
-    public sealed class LeaderboardResponse
-    {
-        public LeaderboardItemDto[] leaderboard;
-    }
-
-    [Serializable]
-    public sealed class LeaderboardItemDto
-    {
-        public string steam_id;
-        public string nickname;
-        public int total_cp;
-    }
 
     [Serializable]
     internal sealed class ApiErrorResponse

@@ -13,7 +13,6 @@ namespace SlimeBlindBox.App
         public UserDto User { get; private set; }
         public GameStateDto GameState { get; private set; }
         public InventoryItemDto[] Inventory { get; private set; } = Array.Empty<InventoryItemDto>();
-        public LeaderboardItemDto[] Leaderboard { get; private set; } = Array.Empty<LeaderboardItemDto>();
         public DictionaryResponse Dictionary { get; private set; }
         public GuildStateResponse Guild { get; private set; }
         public bool IsBusy { get; private set; }
@@ -43,7 +42,7 @@ namespace SlimeBlindBox.App
                 {
                     GameState = response.game_state;
                     LastMessage = $"获得 {response.name}（{response.rarity}）";
-                    StartCoroutine(RefreshInventoryAndLeaderboard());
+                    StartCoroutine(RefreshInventory());
                 },
                 SetError)));
         }
@@ -58,22 +57,6 @@ namespace SlimeBlindBox.App
             }, SetError)));
         }
 
-        public void Merge(int slimeId)
-        {
-            if (IsBusy) return;
-            var consume = new[] { new ConsumeSlimeDto { slime_id = slimeId, count = 5 } };
-            StartCoroutine(Run(apiClient.Merge(
-                consume,
-                response =>
-                {
-                    LastMessage = response.success
-                        ? $"融合成功：{response.result_name}（{response.result_rarity}）"
-                        : $"融合失败，获得残渣 × {response.residue_gained}";
-                    StartCoroutine(RefreshAll());
-                },
-                SetError)));
-        }
-
         public void CreateGuild() => StartCoroutine(Run(apiClient.CreateGuild("我的史莱姆公会", _ => { LastMessage = "公会创建成功"; StartCoroutine(RefreshAll()); }, SetError)));
         public void Donate(int slimeId) => StartCoroutine(Run(apiClient.Donate(slimeId, 1, _ => { LastMessage = "捐献成功"; StartCoroutine(RefreshAll()); }, SetError)));
         public void UpgradeGuild(string type) => StartCoroutine(Run(apiClient.UpgradeGuild(type, _ => { LastMessage = "科技升级成功"; StartCoroutine(RefreshAll()); }, SetError)));
@@ -83,15 +66,14 @@ namespace SlimeBlindBox.App
         public IEnumerator RefreshAll()
         {
             yield return Run(apiClient.GetGameState(value => GameState = value, SetError));
-            yield return RefreshInventoryAndLeaderboard();
+            yield return RefreshInventory();
             yield return Run(apiClient.GetDictionary(value => Dictionary = value, SetError));
             yield return Run(apiClient.GetGuild(value => Guild = value, SetError));
         }
 
-        private IEnumerator RefreshInventoryAndLeaderboard()
+        private IEnumerator RefreshInventory()
         {
             yield return Run(apiClient.GetInventory(value => Inventory = value.inventory, SetError));
-            yield return Run(apiClient.GetLeaderboard(value => Leaderboard = value.leaderboard, SetError));
         }
 
         private IEnumerator Run(IEnumerator operation)

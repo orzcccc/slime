@@ -34,23 +34,9 @@ namespace SlimeBlindBox.Networking
             yield return Send<object, GameStateDto>("GET", "/api/game/state", null, true, onSuccess, onError);
         }
 
-        public IEnumerator Merge(
-            ConsumeSlimeDto[] consumeSlimes,
-            Action<MergeResponse> onSuccess,
-            Action<string> onError)
-        {
-            var body = new MergeRequest { consume_slimes = consumeSlimes };
-            yield return Send("POST", "/api/game/merge", body, true, onSuccess, onError);
-        }
-
         public IEnumerator GetInventory(Action<InventoryResponse> onSuccess, Action<string> onError)
         {
             yield return Send<object, InventoryResponse>("GET", "/api/user/inventory", null, true, onSuccess, onError);
-        }
-
-        public IEnumerator GetLeaderboard(Action<LeaderboardResponse> onSuccess, Action<string> onError)
-        {
-            yield return Send<object, LeaderboardResponse>("GET", "/api/social/leaderboard", null, true, onSuccess, onError);
         }
 
         public IEnumerator GetDictionary(Action<DictionaryResponse> ok, Action<string> error)

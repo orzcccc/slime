@@ -35,12 +35,12 @@ function createApp({ gameService = defaultGameService } = {}) {
           [identity.steamId, identity.nickname, gameConfig.initialBoxCount, gameConfig.defaultBoxCapacity, loginTime, loginTime, loginTime],
         );
         const user = await db.get(
-          'SELECT id, steam_id, nickname, total_cp, residue FROM users WHERE steam_id = ?',
+          'SELECT id, steam_id, nickname, total_cp FROM users WHERE steam_id = ?',
           [identity.steamId],
         );
         res.json({
           token: signToken(user),
-          user: { steam_id: user.steam_id, nickname: user.nickname, total_cp: user.total_cp, residue: user.residue },
+          user: { steam_id: user.steam_id, nickname: user.nickname, total_cp: user.total_cp },
         });
       } catch (error) {
         next(error);
@@ -58,14 +58,6 @@ function createApp({ gameService = defaultGameService } = {}) {
 
   app.post('/api/game/claim-boxes', requireAuth, async (req, res, next) => {
     try { res.json(await gameService.claimBoxes(req.user.id)); } catch (error) { next(error); }
-  });
-
-  app.post('/api/game/merge', requireAuth, async (req, res, next) => {
-    try {
-      res.json(await gameService.mergeSlimes(req.user.id, req.body?.consume_slimes));
-    } catch (error) {
-      next(error);
-    }
   });
 
   app.get('/api/game/state', requireAuth, async (req, res, next) => {
@@ -133,18 +125,6 @@ function createApp({ gameService = defaultGameService } = {}) {
       } catch (error) { next(error); }
     });
   }
-
-  app.get('/api/social/leaderboard', requireAuth, async (_req, res, next) => {
-    try {
-      const leaderboard = await db.all(
-        `SELECT steam_id, nickname, total_cp FROM users
-         ORDER BY total_cp DESC, id ASC LIMIT 50`,
-      );
-      res.json({ leaderboard });
-    } catch (error) {
-      next(error);
-    }
-  });
 
   app.use((_req, res) => res.status(404).json({ error: '接口不存在' }));
   app.use((error, _req, res, _next) => {

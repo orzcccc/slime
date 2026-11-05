@@ -67,7 +67,6 @@ async function initializeDatabase() {
     box_count INTEGER NOT NULL DEFAULT 1 CHECK(box_count >= 0),
     box_capacity INTEGER NOT NULL DEFAULT 8 CHECK(box_capacity > 0),
     last_box_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    residue INTEGER NOT NULL DEFAULT 0 CHECK(residue >= 0),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`);
@@ -220,9 +219,13 @@ async function migrateUsersTable() {
   await addColumnIfMissing('users', 'box_count', 'INTEGER NOT NULL DEFAULT 1 CHECK(box_count >= 0)');
   await addColumnIfMissing('users', 'box_capacity', 'INTEGER NOT NULL DEFAULT 8 CHECK(box_capacity > 0)');
   await addColumnIfMissing('users', 'last_box_at', "TEXT NOT NULL DEFAULT '1970-01-01 00:00:00'");
-  await addColumnIfMissing('users', 'residue', 'INTEGER NOT NULL DEFAULT 0 CHECK(residue >= 0)');
   await run("UPDATE users SET last_box_at = CURRENT_TIMESTAMP WHERE last_box_at = '1970-01-01 00:00:00'");
   await run('INSERT OR IGNORE INTO schema_migrations (version) VALUES (1)');
+  // 融合与残渣系统已移除：清理旧数据库中遗留的残渣列。
+  if (await columnExists('users', 'residue')) {
+    await run('ALTER TABLE users DROP COLUMN residue');
+  }
+  await run('INSERT OR IGNORE INTO schema_migrations (version) VALUES (5)');
 }
 
 function closeDatabase() {

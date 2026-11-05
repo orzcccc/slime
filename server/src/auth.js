@@ -16,7 +16,7 @@ async function requireAuth(req, res, next) {
 
     const payload = jwt.verify(match[1], config.jwtSecret);
     const user = await db.get(
-      'SELECT id, steam_id, nickname, total_cp, residue FROM users WHERE id = ?',
+      'SELECT id, steam_id, nickname, total_cp FROM users WHERE id = ?',
       [Number(payload.sub)],
     );
     if (!user) return res.status(401).json({ error: '登录凭证对应的用户不存在' });

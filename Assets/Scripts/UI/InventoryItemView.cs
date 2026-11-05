@@ -8,6 +8,5 @@ namespace SlimeBlindBox.UI
         public Image icon;
         public Text nameText;
         public Text detailText;
-        public Button mergeButton;
     }
 }

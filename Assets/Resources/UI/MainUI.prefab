@@ -2782,7 +2782,6 @@ MonoBehaviour:
   guildContent: {fileID: 8596769127437598853}
   homePage: {fileID: 1182757080461204215}
   inventoryPage: {fileID: 7809318193653886947}
-  inventorySlimePanel: {fileID: 5941629754620406446}
   boxPage: {fileID: 8395936186361354966}
   dictionaryPage: {fileID: 2024420447036933956}
   guildPage: {fileID: 4767532586109610413}
