@@ -13,6 +13,12 @@ alwaysApply: true
 - 每次修改后校验：所有 `{fileID: …}` 引用都能在文件内找到；fileID 不重复；`m_Children` 与 `m_Father` 双向一致，`m_RootOrder` 与子节点顺序一致；引用的外部 GUID 在对应 `.meta` 中存在。
 - Unity Editor 正在运行时，切回 Editor 会自动重新导入修改后的文件；修改前确认该 Prefab 没有在 Prefab Mode 中留有未保存的改动，以免互相覆盖。
 - Prefab 放入约定资源目录。当前原型使用 `Assets/Resources/`，运行时通过 `Resources.Load<T>()` 加载；未来迁移 Addressables 时统一替换加载层。
+- 公共 UI Prefab 统一放在 `Assets/Resources/UI/Common/`；页面、弹窗和业务专用条目仍放在 `Assets/Resources/UI/` 或对应系统子目录。
+- 创建或嵌入 UI 对象前，先搜索 `Assets/Resources/UI/Common/` 是否已有可复用 Prefab；有合适资源时必须优先引用或实例化，不得在页面 Prefab 内复制同类层级。
+- 自行判断组件是否应公共化：无业务数据依赖、视觉与交互结构稳定，并预计被两个及以上页面复用的按钮、标签、遮罩、通用卡片等属于公共组件；仅名称相同但样式、尺寸或行为不同的不强行合并。
+- 识别为公共组件但公共目录中不存在时，先在 `Assets/Resources/UI/Common/` 新建独立 `.prefab` 和固定 GUID 的 `.meta`，再由页面或弹窗引用；禁止先复制到多个页面后再补公共资源。
+- 公共组件使用语义化名称，例如 `PrimaryButton.prefab`、`CloseButton.prefab`、`PopupMask.prefab`；业务动作通过外层引用组件和运行时事件绑定，不写入公共 Prefab。
+- 修改公共 Prefab 前检查全部引用场景，避免为单一页面需求破坏其他界面；页面特有差异优先由外层参数或专用变体表达。
 - 使用专门的引用组件保存 Prefab 内的序列化组件引用，例如 `MainUiReferences`；运行时代码只负责加载、事件绑定、数据刷新、动态列表内容和动画控制。
 - 动态列表可以在运行时实例化列表项 Prefab，但列表容器、页面结构、导航、静态按钮和装饰必须来自 Prefab。
 - 修改 UI 前先检查现有 Prefab和引用组件，始终在现有 Prefab 上增量修改，避免重复创建并行 UI 架构。

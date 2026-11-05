@@ -1,6 +1,6 @@
 # 最小 UI 框架
 
-> 状态：规则已确认；客户端尚未迁移（见“九、迁移待办”）  
+> 状态：规则已确认；客户端尚未迁移（见“十一、迁移待办”）
 > 最后更新：2026-11-05  
 > 主策划入口：[《史莱姆盲盒》项目策划案](../史莱姆盲盒-项目策划案.md)  
 > 关联代码：`Assets/Scripts/UI/SafeAreaFitter.cs`、`Assets/Scripts/UI/MainUiReferences.cs`、`Assets/Scripts/UI/GameSettingsView.cs`、`Assets/Scripts/UI/ResponsiveMainUi.cs`  
@@ -126,15 +126,32 @@ xxxScroll        ScrollRect（movementType = Clamped）
 - 禁止用 `Find`、`GetChild`、路径字符串查找节点；不生成绑定代码。
 - 纯装饰节点不需要脚本字段。
 
-## 九、不负责的事
+## 九、公共 UI 预设
+
+- 公共目录固定为 `Assets/Resources/UI/Common/`。页面、弹窗和业务条目不放进该目录。
+- 制作或修改页面前先检查公共目录，已有适合的公共 Prefab 时优先复用，不在页面内复制相同按钮、遮罩或卡片层级。
+- 满足以下条件时自行识别为公共组件：不依赖具体业务数据；视觉与交互结构稳定；预计至少被两个页面或弹窗使用。常见对象包括主按钮、次按钮、关闭按钮、弹窗遮罩、通用标题和通用卡片。
+- 名称相同不代表必须公共化。尺寸、样式、状态反馈或行为明显不同的组件应保持独立，避免产生大量难以维护的变体开关。
+- 若确定属于公共组件但目录中尚无对应资源，先创建独立 Prefab 与 `.meta`，再让业务 Prefab 引用。公共 Prefab 使用语义化英文名称，例如 `PrimaryButton.prefab`、`CloseButton.prefab`。
+- 公共 Prefab 只保存通用结构、视觉、布局和基础交互状态；业务文案、数据、点击行为由使用方的引用组件和运行时代码设置。
+- 修改公共 Prefab 时必须检查其全部引用方。单一页面的特殊需求不得直接污染公共资源，应通过外层布局、序列化参数或专用业务 Prefab 处理。
+
+查找与创建顺序：
+
+1. 搜索 `Assets/Resources/UI/Common/` 中已有公共 Prefab。
+2. 检查当前系统已有的业务 Prefab，确认是否只是业务特例。
+3. 无可复用资源且符合公共组件标准时，在公共目录新建 Prefab。
+4. 不符合公共标准时，创建在对应页面或系统目录中。
+
+## 十、不负责的事
 
 本框架不提供，也不准备扩展为：界面管理器、界面注册表、红点系统、多语言框架、资源加载框架、对象池、动画框架、自定义按钮或滚动列表、自动绑定代码生成、PSD 导出流程。需要时另立系统文档讨论。
 
-## 十、迁移待办
+## 十一、迁移待办
 
 现有 `MainUI.prefab` 和 `GameSettings.prefab` 按旧方案制作，与本框架的差异如下，直接修改预制文件逐项迁移：
 
-- [x] 导入项目字体 `KeinannMaruPOP.ttf`；现有 uGUI `Text` 已全部改用该字体，运行时不再取系统微软雅黑（缺失时才回退并报错）。
+- [x] 导入项目字体 `KeinannMaruPOP.ttf`，作为 TMP 动态 SDF 字体资产的源字体；运行时不再依赖系统字体。
 - [x] 用 `KeinannMaruPOP.ttf` 生成动态 SDF TMP 字体资产 `Assets/Resources/Fonts/KeinannMaruPOP SDF.asset`，并将主界面、设置弹窗、背包项、盲盒品质项及运行时动态文本迁移为 `TextMeshProUGUI`。
 - [ ] 核验荆南麦圆体的商用与再分发授权，保存作者授权声明并记入授权清单。
 - [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`；CanvasScaler 改为 `800×800`、match `0.5`。
