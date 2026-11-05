@@ -1,0 +1,19 @@
+---
+description: Unity 静态界面与可复用对象必须创建为真实 Prefab 并通过资源加载器实例化
+alwaysApply: true
+---
+
+# Unity Prefab 创建与加载规则
+
+- 静态 UI、页面、弹窗、列表项模板及可复用 GameObject 必须保存为真实 `.prefab` 资源，不得在运行时用 `new GameObject` 拼装整套静态层级。
+- 已存在的 UI Prefab（特别是 `Assets/Resources/UI/MainUI.prefab`）必须直接在 Unity Prefab Mode/Inspector 中修改位置、尺寸、锚点、布局组件、图片与静态层级，不得再创建或保留 Editor 生成器重建它们。
+- 禁止用 `MainUiPrefabBuilder` 一类脚本自动覆盖现有 UI Prefab；不得通过删除后重建的方式更新已存在的界面资源。
+- 优先通过已连接的 Unity 专用 MCP/API 在 Editor 内直接编辑 Prefab 并保存；禁止为此使用鼠标/键盘桌面自动化。
+- 若当前会话没有 Unity MCP，需要修改已有 Prefab 时，应保留其现有资源和序列化引用，等待可用的 Unity Editor 编辑途径或让用户在 Prefab Mode 中调整；不得创建一次性生成器，也不得手写大型 Prefab YAML。
+- 只有在创建全新的、此前不存在的非 UI 可复用资源且无法通过 Unity MCP 完成时，才可在用户确认后使用一次性 Editor 工具；资源生成并确认后应删除该工具，且不得影响已有 Prefab。
+- Prefab 放入约定资源目录。当前原型使用 `Assets/Resources/`，运行时通过 `Resources.Load<T>()` 加载；未来迁移 Addressables 时统一替换加载层。
+- 使用专门的引用组件保存 Prefab 内的序列化组件引用，例如 `MainUiReferences`；运行时代码只负责加载、事件绑定、数据刷新、动态列表内容和动画控制。
+- 动态列表可以在运行时实例化列表项 Prefab，但列表容器、页面结构、导航、静态按钮和装饰必须来自 Prefab。
+- 修改 UI 前先检查现有 Prefab和引用组件，始终在现有 Prefab 上增量修改，避免重复创建并行 UI 架构。
+- 创建或更新 Prefab 后，确认资源实际存在、引用可解析、运行时加载路径正确，并检查 Unity 编译/Console 错误。
+- 涉及 UI/Prefab 架构的方案与变更必须同步到对应 `Docs/Systems/` 文档，并在主策划案保留概要链接；遵循项目文档拆分规则。
