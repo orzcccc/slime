@@ -71,7 +71,7 @@ alwaysApply: true
 
 - 接入真实 Steam Ticket 鉴权，移除生产环境的 `dev:` 登录。
 - 替换 Pixel Adventure 2、Sweet Land GUI 等占位或待核验授权的素材，完成授权清单。
-- 替换 Windows 系统中文字体，导入可商用并允许再分发的中文字体。
+- 核验已导入的中文字体荆南麦圆体（`KeinannMaruPOP.ttf`）的商用与再分发授权，并记入授权清单。
 - 实现概率公示页面。
 - 关闭 Release 构建中的 GM 工具。
 - 服务端生产部署方案（目标架构见 `Docs/Systems/目标后端架构.md`）、备份与监控。

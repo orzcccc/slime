@@ -16,7 +16,8 @@
 | 第二种比例检查 | 不适用；高 DPI 缩放规则确定后补充（待确认） |
 | 预览图性质 | 高保真效果图 |
 | 切图 | 部分已有（`Assets/Resources/icon/`、Sweet Land GUI）；缺图处用纯色 Image |
-| 文字组件 | `TextMeshProUGUI`；前置任务：导入可商用中文 TMP 字体资产 |
+| 文字组件 | `TextMeshProUGUI`；前置任务：用项目字体生成中文 TMP 字体资产 |
+| 字体 | 荆南麦圆体 `KeinannMaruPOP`，文件 `Assets/Resources/Fonts/KeinannMaruPOP.ttf`（已导入；授权待核验） |
 
 与通用自适应规则的差异（用户已确认）：
 
@@ -133,7 +134,9 @@ xxxScroll        ScrollRect（movementType = Clamped）
 
 现有 `MainUI.prefab` 和 `GameSettings.prefab` 按旧方案制作，与本框架的差异如下，直接修改预制文件逐项迁移：
 
-- [ ] 导入可商用中文 TMP 字体资产，替换 uGUI `Text`（同时解决上线阻塞项中的字体授权问题）。
+- [x] 导入项目字体 `KeinannMaruPOP.ttf`；现有 uGUI `Text` 已全部改用该字体，运行时不再取系统微软雅黑（缺失时才回退并报错）。
+- [ ] 用 `KeinannMaruPOP.ttf` 生成 TMP 字体资产，替换 uGUI `Text`。
+- [ ] 核验荆南麦圆体的商用与再分发授权，保存作者授权声明并记入授权清单。
 - [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`；CanvasScaler 改为 `800×800`、match `0.5`。
 - [ ] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。
 - [ ] `SafeAreaFitter` 改为按第六节修改 offset。
