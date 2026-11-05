@@ -121,7 +121,7 @@ xxxScroll        ScrollRect（movementType = Clamped）
 | Fade Duration | `0.1` |
 | Navigation | `None` |
 
-- 界面脚本挂在预制根节点上，用 `[SerializeField]` 字段保存引用，在 Inspector 中拖拽赋值。
+- 界面脚本挂在预制根节点上，用 `[SerializeField]` 字段保存引用，引用直接写在预制文件里。
 - 禁止用 `Find`、`GetChild`、路径字符串查找节点；不生成绑定代码。
 - 纯装饰节点不需要脚本字段。
 
@@ -131,7 +131,7 @@ xxxScroll        ScrollRect（movementType = Clamped）
 
 ## 十、迁移待办
 
-现有 `MainUI.prefab` 和 `GameSettings.prefab` 按旧方案制作，与本框架的差异如下，在 Unity Editor 中逐项迁移：
+现有 `MainUI.prefab` 和 `GameSettings.prefab` 按旧方案制作，与本框架的差异如下，直接修改预制文件逐项迁移：
 
 - [ ] 导入可商用中文 TMP 字体资产，替换 uGUI `Text`（同时解决上线阻塞项中的字体授权问题）。
 - [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`；CanvasScaler 改为 `800×800`、match `0.5`。

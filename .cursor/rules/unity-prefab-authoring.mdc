@@ -6,11 +6,12 @@ alwaysApply: true
 # Unity Prefab 创建与加载规则
 
 - 静态 UI、页面、弹窗、列表项模板及可复用 GameObject 必须保存为真实 `.prefab` 资源，不得在运行时用 `new GameObject` 拼装整套静态层级。
-- 已存在的 UI Prefab（特别是 `Assets/Resources/UI/MainUI.prefab`）必须直接在 Unity Prefab Mode/Inspector 中修改位置、尺寸、锚点、布局组件、图片与静态层级，不得再创建或保留 Editor 生成器重建它们。
-- 禁止用 `MainUiPrefabBuilder` 一类脚本自动覆盖现有 UI Prefab；不得通过删除后重建的方式更新已存在的界面资源。
-- 优先通过已连接的 Unity 专用 MCP/API 在 Editor 内直接编辑 Prefab 并保存；禁止为此使用鼠标/键盘桌面自动化。
-- 若当前会话没有 Unity MCP，需要修改已有 Prefab 时，应保留其现有资源和序列化引用，等待可用的 Unity Editor 编辑途径或让用户在 Prefab Mode 中调整；不得创建一次性生成器，也不得手写大型 Prefab YAML。
-- 只有在创建全新的、此前不存在的非 UI 可复用资源且无法通过 Unity MCP 完成时，才可在用户确认后使用一次性 Editor 工具；资源生成并确认后应删除该工具，且不得影响已有 Prefab。
+- 界面不再通过 Unity Editor 修改。`Assets/Resources/UI/MainUI.prefab` 及其他 UI Prefab 一律直接修改预制文件（YAML 文本），包括位置、尺寸、锚点、布局组件、图片、文字与静态层级。
+- 在现有文件上增量修改：保留已有对象的 fileID、资源 GUID 和组件引用；新增对象使用文件内不重复的 fileID；不得删除后整体重建。
+- 新建 Prefab 或资源同样直接编写文件；新资源同时编写 `.meta` 并指定固定 GUID，以便预制立即引用。
+- 禁止用 `MainUiPrefabBuilder` 一类生成器脚本或鼠标/键盘桌面自动化来创建、覆盖 Prefab。
+- 每次修改后校验：所有 `{fileID: …}` 引用都能在文件内找到；fileID 不重复；`m_Children` 与 `m_Father` 双向一致，`m_RootOrder` 与子节点顺序一致；引用的外部 GUID 在对应 `.meta` 中存在。
+- Unity Editor 正在运行时，切回 Editor 会自动重新导入修改后的文件；修改前确认该 Prefab 没有在 Prefab Mode 中留有未保存的改动，以免互相覆盖。
 - Prefab 放入约定资源目录。当前原型使用 `Assets/Resources/`，运行时通过 `Resources.Load<T>()` 加载；未来迁移 Addressables 时统一替换加载层。
 - 使用专门的引用组件保存 Prefab 内的序列化组件引用，例如 `MainUiReferences`；运行时代码只负责加载、事件绑定、数据刷新、动态列表内容和动画控制。
 - 动态列表可以在运行时实例化列表项 Prefab，但列表容器、页面结构、导航、静态按钮和装饰必须来自 Prefab。
