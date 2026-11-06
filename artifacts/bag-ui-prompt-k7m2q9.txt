@@ -1,0 +1,23 @@
+Use case: style-transfer
+Asset type: mobile/PC casual game UI screen mockup, inventory (backpack) panel
+Input images: Image 1 = art style reference only (cute chunky cartoon game art, thick dark outlines, soft cel shading, glossy highlights, mossy green floating island, purple crystals, teal and purple orbs, rounded beveled buttons in purple/blue/teal). Image 2 = layout and content reference (wireframe of the Bag screen). Do not copy the island scene composition of Image 1; reproduce the layout of Image 2 rendered in the art style of Image 1.
+Primary request: Redraw the Image 2 backpack panel as a polished, fully rendered game UI in the Image 1 art style.
+Layout (keep exactly as Image 2, portrait panel):
+- A large rounded panel frame styled like Image 1: chunky dark navy outline, slate-blue stone/metal bevel border with small teal gem rivets, mossy green slime drips along the top edge, small purple crystals on the corners. Panel interior is a soft light parchment / pale mint surface so content is readable.
+- Top center title banner with bold cartoon text "背包". Top right a round red-pink close button with a white "×".
+- Under the title a small info line: "持有 8 种 · 共 46 只 · 总CP 12,860".
+- Row of two rounded dropdown buttons: "排序：品质 高→低 ▼" and "筛选：全部品质 ▼", styled like Image 1 bottom nav buttons (beveled, dark outline).
+- A 4 x 2 grid of 8 slime cards. Each card: a colored rounded frame with a header ribbon showing the quality name, a small round dark-teal badge with "岛" at top-left (omit on 2 cards as in Image 2: 极品 card has it, 传说 card and 劣质 card do not), a small red pill badge with count at top-right, a cute glossy slime character in the center sitting on a small yellow-ringed pad like the slime in Image 1 (round body, two simple dot eyes, cute, varied tint per card), bold slime name, and a small "Lv · CP" line.
+Cards in order (row 1 then row 2), frame color / header / count / slime color / name / stats:
+1. pink frame, "神器", "×1", sakura pink slime, "樱花史莱姆", "Lv.1 · CP 2,400" (most precious: add gold sparkle and subtle glow)
+2. red frame, "传说", "×3", rose red slime, "红莲史莱姆", "Lv.2 · CP 1,000"
+3. orange frame, "史诗", "×2", sunset peach slime, "落日史莱姆", "Lv.1 · CP 300"
+4. purple frame, "极品", "×5", grape lavender slime, "葡萄史莱姆", "Lv.3 · CP 170"
+5. blue frame, "精良", "×6", blueberry blue slime, "蓝莓史莱姆", "Lv.2 · CP 150"
+6. green frame, "优秀", "×9", mint green slime, "薄荷史莱姆", "Lv.4 · CP 60"
+7. white/grey outlined frame, "普通", "×12", cotton white slime, "棉花史莱姆", "Lv.5 · CP 14"
+8. dull grey frame, "劣质", "×8", grey slime, "干瘪史莱姆", "Lv.6 · CP 6" (slightly deflated, droopy)
+- Bottom: pagination with two beveled square buttons "<" and ">" and the text "1 / 1" between them.
+Style/medium: high quality 2D cartoon game UI art, exactly matching Image 1: thick dark outlines, saturated candy colors, glossy highlights, mossy green, purple crystal and teal orb accents.
+Text (verbatim, Simplified Chinese, clean and legible): all text listed above, exactly as written.
+Constraints: keep Image 2 layout, element order and all text; do not add the numbered annotation circles (1-6) from Image 2; no English labels; flat light grey background outside the panel; no watermark.
