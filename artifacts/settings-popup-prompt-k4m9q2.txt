@@ -1,0 +1,19 @@
+Use case: ui-mockup
+Asset type: in-game settings popup UI concept for a cute desktop slime blind-box game (800x800 transparent desktop window)
+Input images: Image 1 is the ART STYLE reference (chunky cartoon game UI, thick dark navy outlines, soft glossy highlights, rounded bubbly shapes, lime-green slime moss, purple and teal crystals, bubble mushrooms, slate-blue stone frames with small teal gem rivets, like the bottom navigation bar). Image 2 is the LAYOUT and CONTENT reference (wireframe of the settings popup). Ignore the numbered dark circle annotation markers 1-5 in Image 2; do not draw them.
+Primary request: Redraw the settings popup from Image 2 as a finished, polished game UI panel in the exact art style of Image 1. Keep the same structure, order and all text of Image 2.
+Layout (top to bottom):
+- A large rounded popup panel with a thick slate-blue stone frame and dark navy outline, decorated lightly with green slime moss drips on the top edge and a few small purple crystals and teal bubbles on the frame corners. Inner panel is a soft light cream-mint surface.
+- Title banner at top center reading "设置" in bold rounded white cartoon font with dark outline. A round red-pink close button with a white "×" at the top right corner.
+- Three tab buttons in a row: "窗口" (selected: glossy lime-green slime button, pressed look), "声音与提醒" and "账号与关于" (unselected: slate-blue stone buttons with light text).
+- Five setting rows, each a rounded card with dark outline, title in bold dark text and a smaller gray subtitle on the left:
+  1. "始终置顶" / "盖在其他窗口上方" with a toggle switch on the right (OFF state: gray-blue track, white round knob on the left)
+  2. "开机自启" / "登录 Windows 后自动出现在桌面" with a toggle switch (ON state: glossy lime-green slime track, knob on the right)
+  3. "锁定位置" / "锁定后按住岛屿不能拖动" with a toggle switch (OFF state)
+  4. "窗口缩放" / "按屏幕清晰度整体缩放" with a segmented selector on the right: "100%" (selected, lime green), "125%", "150%", "200%"
+  5. "重置窗口位置" / "回到主屏幕右下角" with a chunky purple cartoon button labeled "重置" on the right
+- Footer hint text centered below the rows in small muted text: "修改即时生效并自动保存"
+Style/medium: polished 2D cartoon mobile/casual game UI, same line weight, shading, gloss and saturated palette as Image 1, crisp clean vector-like rendering, flat front view.
+Composition/framing: the popup panel centered, front-facing, filling most of the canvas, on a plain flat light gray background like Image 1.
+Text (verbatim, Simplified Chinese, must be rendered exactly and legibly): 设置, 窗口, 声音与提醒, 账号与关于, 始终置顶, 盖在其他窗口上方, 开机自启, 登录 Windows 后自动出现在桌面, 锁定位置, 锁定后按住岛屿不能拖动, 窗口缩放, 按屏幕清晰度整体缩放, 100%, 125%, 150%, 200%, 重置窗口位置, 回到主屏幕右下角, 重置, 修改即时生效并自动保存, ×
+Constraints: keep all text readable and correctly spelled; keep the row order of Image 2; no extra rows or extra text; no numbered annotation markers; no watermark; no island scene behind the panel.
