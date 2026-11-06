@@ -7,6 +7,7 @@ namespace SlimeBlindBox.UI
     public sealed class MainUiReferences : MonoBehaviour
     {
         [Header("顶栏")]
+        public GameObject topBar;
         public TMP_Text resourceText;
         public Button slimeModeButton;
         public Image slimeModeImage;
@@ -29,6 +30,7 @@ namespace SlimeBlindBox.UI
         public Button claimButton;
 
         [Header("底部功能坞")]
+        public GameObject bottomBar;
         public Button boxTab;
         public GameObject warehouseBadge;
         public TMP_Text warehouseBadgeText;
@@ -39,16 +41,11 @@ namespace SlimeBlindBox.UI
 
         [Header("功能页")]
         public GameObject contentArea;
-        public GameObject inventoryPage;
         public GameObject boxPage;
         public GameObject dictionaryPage;
         public Transform boxInventoryContent;
-        public Transform inventoryContent;
         public Transform boxQualityContent;
         public Transform dictionaryContent;
-        public Button inventoryPreviousPage;
-        public Button inventoryNextPage;
-        public TMP_Text inventoryPageText;
         public Image selectedBoxImage;
         public TMP_Text selectedBoxName;
         public TMP_Text selectedBoxCount;

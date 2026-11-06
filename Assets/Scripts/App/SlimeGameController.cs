@@ -22,6 +22,8 @@ namespace SlimeBlindBox.App
         public UserDto User { get; private set; }
         public GameStateDto GameState { get; private set; }
         public InventoryItemDto[] Inventory { get; private set; } = Array.Empty<InventoryItemDto>();
+        /// <summary>背包是否至少成功读取过一次。为 false 且不在请求中时，表示读取失败，界面应提示重试。</summary>
+        public bool InventoryLoaded { get; private set; }
         public DictionaryResponse Dictionary { get; private set; }
         public bool IsBusy => pendingRequests > 0;
         public bool IsLoggedIn => User != null;
@@ -36,6 +38,11 @@ namespace SlimeBlindBox.App
         }
 
         private void Start()
+        {
+            Connect();
+        }
+
+        private void Connect()
         {
             Begin();
             backend.Login(response =>
@@ -98,6 +105,14 @@ namespace SlimeBlindBox.App
             RefreshCollections();
         }
 
+        /// <summary>背包读取失败后的重试：未登录时重新登录，否则只重新读取背包与图鉴。</summary>
+        public void RetryInventory()
+        {
+            if (IsBusy) return;
+            if (IsLoggedIn) RefreshCollections();
+            else Connect();
+        }
+
         private void RefreshGameState()
         {
             Begin();
@@ -114,6 +129,7 @@ namespace SlimeBlindBox.App
             backend.GetInventory(response =>
             {
                 Inventory = response.inventory ?? Array.Empty<InventoryItemDto>();
+                InventoryLoaded = true;
                 End();
             }, Fail);
             Begin();

@@ -1,0 +1,15 @@
+Use case: ui-mockup
+Asset type: game UI screen, slime detail page that replaces the backpack panel
+Input images: Image 1 = finished backpack panel; reuse EXACTLY the same outer panel frame (slate-blue stone border, teal gem rivets, slime drips on top, purple crystals in the bottom corners, round red close button top right) and the same component style. Image 2 = wireframe of the detail page; reproduce its layout and text, ignore annotation circles and all text outside the grey 800x800 window.
+Primary request: the full slime detail panel, same size and proportions as the panel in Image 1, centered.
+Style/medium: exactly match Image 1 (the reference backpack panel): cute chunky 2D cartoon casual game UI, thick dark navy outlines, saturated candy colors, soft cel shading, glossy highlights, slate-blue stone frame with teal gem rivets, mossy green slime drips, small purple crystals, pale mint-cream interior surfaces.
+Layout inside the panel (top to bottom):
+- Top-left: small rounded beveled back button with text "< 返回". Top-right: the round red close button with white x, same as Image 1.
+- Centered: a ribbon banner with folded swallow-tail ends, red, with text "传说".
+- Middle: a large cute glossy red slime (same character style as the slimes in Image 1, round body, two dot eyes) standing on a small yellow-ringed teal pad. To its left a tall rounded beveled arrow button "<" and to its right a tall rounded beveled arrow button ">", vertically centered on the slime.
+- Below: bold name "红莲史莱姆", then a small grey line "持有 ×3 · 首次获得 2026-11-03".
+- An info box (rounded cream card with dark outline) containing three rows: row 1 "等级 Lv.2" on the left and a long rounded progress bar on the right with small text "升级方式待开放" inside, the bar shown locked/greyed; row 2 "基础CP 800    有效CP 1,000（Lv.2 加成 ×1.25）"; row 3 "本种合计 CP 3,000（×3）".
+- Bottom: two wide rounded beveled buttons side by side: purple "在图鉴中查看" and teal-green "放到岛上展示".
+Background: perfectly flat uniform light grey #c8c8c8 outside the UI, no shadows, no gradients, no texture, so the UI can be cut out cleanly. Every UI element has a thick dark outline and clear gaps between elements (do not let elements touch or overlap except where described).
+Text (verbatim, Simplified Chinese): < 返回, 传说, 红莲史莱姆, 持有 ×3 · 首次获得 2026-11-03, 等级 Lv.2, 升级方式待开放, 基础CP 800, 有效CP 1,000（Lv.2 加成 ×1.25）, 本种合计 CP 3,000（×3）, 在图鉴中查看, 放到岛上展示.
+Avoid: annotation numbers, English text, watermark.

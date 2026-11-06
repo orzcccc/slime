@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: game character sprites for slime cards (to be cut out)
+Input images: Image 1 = high rarity cards; Image 2 = backpack panel. Copy the slime characters EXACTLY (same shape, colors, faces, horns, helmet, crown, sparkles, thick dark outline, glossy highlights, cartoon style).
+Primary request: five slimes standing alone in one row with wide even gaps, each the same size, on a perfectly flat uniform light grey #c8c8c8 background:
+1. the pink sakura slime from the pink 神器 card in Image 2 (round pink body, two dot eyes)
+2. the dark crimson slime with two small dark horns from the 魔王 card
+3. the golden slime with the red-crested helmet from the 战神 card
+4. the icy cyan crystal slime with the golden crown from the 至尊 card
+5. the magenta cosmic slime with horns and a jeweled tiara from the 魔神 card
+Constraints: NO pedestal, NO pad, NO ring under the slimes, no ground shadow, no glow, no sparkles floating outside the bodies, no card frames, no text. The background must be one flat color with no gradients or shadows. Every slime has a closed thick dark outline and does not touch the others.

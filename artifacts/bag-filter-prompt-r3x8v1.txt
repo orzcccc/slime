@@ -1,0 +1,18 @@
+Use case: ui-mockup
+Asset type: game UI popup, quality filter layer for the backpack screen
+Input images: Image 1 = finished backpack panel, use it as the exact art style and component style reference. Image 2 = wireframe; reproduce ONLY the white popup in the middle (labelled "按品质筛选（可多选）"), ignore the greyed backpack behind it and all annotation circles and text outside the popup.
+Primary request: one standalone popup panel, centered, filling most of the canvas.
+Style/medium: exactly match Image 1 (the reference backpack panel): cute chunky 2D cartoon casual game UI, thick dark navy outlines, saturated candy colors, soft cel shading, glossy highlights, slate-blue stone frame with teal gem rivets, mossy green slime drips, small purple crystals, pale mint-cream interior surfaces.
+Layout of the popup (top to bottom):
+- A rounded panel with the same slate-blue stone frame and dark outline as Image 1, pale mint-cream interior, a few small slime drips on the top edge.
+- Title text at top center: "按品质筛选（可多选）".
+- A grid of 12 rounded option buttons, 3 columns x 4 rows, with even gaps. Each option button: light cream rounded button with dark outline and bevel, a small rounded color square on the left and the quality name on the right. Rows in order:
+  row 1: grey "劣质", white "普通", green "优秀"
+  row 2: blue "精良", purple "极品", orange "史诗 √"
+  row 3: red "传说 √", pink "神器 √", dark crimson "魔王"
+  row 4: gold "战神", cyan "至尊", magenta "魔神"
+- The three selected options (史诗, 传说, 神器) use a selected state: pale teal background, thicker dark teal outline, and a check mark.
+- Bottom row: two wide rounded beveled buttons side by side: a cream secondary button "重置" and a teal-green primary button "确定", styled like the sort/filter pill buttons in Image 1.
+Background: perfectly flat uniform light grey #c8c8c8 outside the UI, no shadows, no gradients, no texture, so the UI can be cut out cleanly. Every UI element has a thick dark outline and clear gaps between elements (do not let elements touch or overlap except where described).
+Text (verbatim, Simplified Chinese): 按品质筛选（可多选）, 劣质, 普通, 优秀, 精良, 极品, 史诗, 传说, 神器, 魔王, 战神, 至尊, 魔神, 重置, 确定.
+Avoid: slime characters, annotation numbers, English text, watermark.

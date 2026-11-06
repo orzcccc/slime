@@ -18,12 +18,10 @@ namespace SlimeBlindBox.UI
         public const string SyncingTime = "下一个\n同步中";
         public const string PlatformFull = "凝聚台\n已满";
         public const string BadgeOverflow = "99+";
-        public const string EmptyInventory = "暂无史莱姆";
         public const string BoxOpening = "盲盒开启中……";
         public const string BoxOpenHint = "点击开启按钮打开 1 个";
         public const string BoxStockEmpty = "该品质盲盒库存为空";
         public const string BoxNameFormat = "{0}盲盒";
         public const string BoxOwnedFormat = "持有 {0} 个";
-        public const string PageFormat = "{0} / {1}";
     }
 }

@@ -1,0 +1,13 @@
+Use case: ui-mockup
+Asset type: extra inventory card assets for the backpack screen
+Input images: Image 1 = finished backpack panel; copy EXACTLY the slime card design (rounded frame in the quality color, header ribbon tab with the quality name, small dark-teal round badge with "岛" top-left, small red pill badge with count top-right, a cute glossy slime sitting on a yellow-ringed teal pad, bold name, small "Lv · CP" line, cream interior) and the card size and proportions.
+Primary request: four new slime cards for the four highest qualities, side by side in one row with wide even gaps, each card the same size as the cards in Image 1. These are the rarest qualities, so give each frame a little extra flourish (small sparkles and a subtle glow like the pink 神器 card in Image 1), but keep the same card structure.
+Cards from left to right (frame color / header / count / slime color / name / stats):
+1. dark crimson #8F1838 frame, "魔王", "×1", dark crimson slime with tiny horns, "深渊魔王史莱姆", "Lv.1 · CP 1,800"
+2. gold #D8A52D frame, "战神", "×1", golden slime with a tiny helmet crest, "炎狱战神史莱姆", "Lv.1 · CP 3,500"
+3. cyan #61E8FF frame, "至尊", "×1", icy cyan crystal slime with a tiny crown, "万象至尊史莱姆", "Lv.1 · CP 7,000"
+4. magenta #FF5CE1 frame, "魔神", "×1", magenta cosmic slime with small star sparkles, "混沌魔神史莱姆", "Lv.1 · CP 15,000"
+Style/medium: exactly match Image 1 (the reference backpack panel): cute chunky 2D cartoon casual game UI, thick dark navy outlines, saturated candy colors, soft cel shading, glossy highlights, slate-blue stone frame with teal gem rivets, mossy green slime drips, small purple crystals, pale mint-cream interior surfaces.
+Background: perfectly flat uniform light grey #c8c8c8 outside the UI, no shadows, no gradients, no texture, so the UI can be cut out cleanly. Every UI element has a thick dark outline and clear gaps between elements (do not let elements touch or overlap except where described).
+Text (verbatim, Simplified Chinese): exactly the texts listed above.
+Avoid: panel frame around the cards, any other UI, English text, watermark.

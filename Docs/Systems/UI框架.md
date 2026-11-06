@@ -15,7 +15,7 @@
 | CanvasScaler match | `0.5` |
 | 第二种比例检查 | 不适用；高 DPI 缩放规则确定后补充（待确认） |
 | 预览图性质 | 高保真效果图 |
-| 切图 | 主界面切图见 [主界面切图资源](主界面切图资源.md)（`Assets/Resources/Sprites/MainPage/`）；另有 Sweet Land GUI；缺图处用纯色 Image |
+| 切图 | 主界面切图见 [主界面切图资源](主界面切图资源.md)（`Assets/Resources/Sprites/MainPage/`），背包切图见 [背包切图资源](背包切图资源.md)（`Assets/Resources/Sprites/Bag/`）；另有 Sweet Land GUI；缺图处用纯色 Image |
 | 文字组件 | `TextMeshProUGUI`；前置任务：用项目字体生成中文 TMP 字体资产 |
 | 字体 | 荆南麦圆体 `KeinannMaruPOP`，文件 `Assets/Resources/Fonts/KeinannMaruPOP.ttf`（已导入；授权待核验） |
 
@@ -157,5 +157,5 @@ xxxScroll        ScrollRect（movementType = Clamped）
 - [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`。（CanvasScaler 已改为 `800×800`、match `0.5`，仍在预制根节点上）
 - [x] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。
 - [ ] `SafeAreaFitter` 改为按第六节修改 offset。
-- [ ] 节点名改为英文驼峰（例如 `开启盲盒` → `openBoxButton`），同步更新引用。（首页、顶栏、功能坞已完成；背包、仓库、图鉴页待改）
+- [ ] 节点名改为英文驼峰（例如 `开启盲盒` → `openBoxButton`），同步更新引用。（首页、顶栏、功能坞、背包已完成；背包已改为独立 `InventoryPopup.prefab`；仓库、图鉴页待改）
 - [ ] 设置弹窗补齐 `mask` / `panel` 结构。
