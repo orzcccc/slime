@@ -10,46 +10,39 @@ namespace SlimeBlindBox.UI
 {
     public sealed class CoreLoopView : MonoBehaviour
     {
-        private static readonly Color BackgroundColor = new Color32(20, 18, 38, 255);
-        private static readonly Color PanelColor = new Color32(42, 38, 72, 255);
-        private static readonly Color PanelAltColor = new Color32(31, 29, 55, 255);
-        private static readonly Color AccentColor = new Color32(83, 209, 138, 255);
+        private const string DisplayModeKey = "mainui.display.mode";
+        private const int DisplayModeSlime = 0;
+        private const int DisplayModeBox = 1;
+        private const int InventoryPageSize = 8;
+        private const int BadgeMaximum = 99;
+        private const int DefaultBoxIntervalSeconds = 3 * 60 * 60;
+
+        private static readonly Color TextColor = new Color32(59, 47, 58, 255);
+        private static readonly Color ModeSelectedTextColor = Color.white;
         private static readonly Color AccentDarkColor = new Color32(35, 122, 88, 255);
-        private static readonly Color BorderColor = new Color32(119, 100, 170, 255);
-        private static readonly Color TextColor = new Color32(240, 238, 255, 255);
-        private static readonly Color MutedTextColor = new Color32(183, 176, 211, 255);
+        private static readonly Color PanelAltColor = new Color32(31, 29, 55, 255);
+
         private static TMP_FontAsset runtimeFont;
         private SlimeGameController controller;
-        private TMP_Text playerText;
-        private TMP_Text boxText;
-        private TMP_Text timerText;
-        private TMP_Text messageText;
-        private TMP_Text resourceText;
-        private Transform inventoryContent;
-        private Transform dictionaryContent;
-        private Transform guildContent;
-        private Transform boxInventoryContent;
-        private Transform boxQualityContent;
-        private GameObject cultivatePanel;
-        private GameObject inventoryPanel;
-        private GameObject boxPanel;
-        private GameObject dictionaryPanel;
-        private GameObject guildPanel;
-        private Button openButton;
-        private DateTime nextBoxAt;
-        private bool isUiReady;
         private MainUiReferences uiRefs;
+        private GameObject[] pages;
+        private BoxSlotItemView slotPrefab;
+        private GameObject inventoryItemPrefab;
+        private Sprite[] inventorySlimeSprites;
+        private Sprite[] boxQualitySprites;
+        private BoxOpenAnimator boxAnimator;
+        private DateTime nextBoxAt;
+        private int boxIntervalSeconds = DefaultBoxIntervalSeconds;
+        private int lastShownSecond = -1;
+        private bool isUiReady;
         private string selectedBoxKey = "WHITE";
         private Color selectedBoxColor = Color.white;
-        private BoxOpenAnimator boxAnimator;
-        private Sprite[] boxQualitySprites;
-        private const int InventoryPageSize = 8;
         private int inventoryPageIndex;
 
         private void Start()
         {
             controller = GetComponent<SlimeGameController>();
-            BuildUi();
+            if (!BuildUi()) return;
             isUiReady = true;
             controller.StateChanged += Render;
             Render();
@@ -62,82 +55,46 @@ namespace SlimeBlindBox.UI
 
         private void Update()
         {
-            if (!isUiReady || controller?.GameState == null || timerText == null) return;
-            if (string.IsNullOrEmpty(controller.GameState.next_box_at))
-            {
-                timerText.text = "培养皿已满";
-                return;
-            }
-            if (nextBoxAt == default)
-            {
-                timerText.text = "正在同步时间……";
-                return;
-            }
+            if (!isUiReady) return;
+            var state = controller.GameState;
+            if (state == null || string.IsNullOrEmpty(state.next_box_at) || nextBoxAt == default) return;
 
             var remaining = nextBoxAt.ToUniversalTime() - DateTime.UtcNow;
             if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
-            timerText.text = $"下一个盲盒：{remaining.Hours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
+            var totalSeconds = (int)remaining.TotalSeconds;
+            if (totalSeconds == lastShownSecond) return;
+            lastShownSecond = totalSeconds;
+            uiRefs.timerText.text = string.Format(MainUiText.NextBoxFormat, (int)remaining.TotalHours, remaining.Minutes, remaining.Seconds);
+            uiRefs.productionBar.value = 1f - Mathf.Clamp01(totalSeconds / (float)boxIntervalSeconds);
         }
 
-        private void BuildUi()
+        private bool BuildUi()
         {
             runtimeFont = ChineseTmpFontProvider.GetFont();
             EnsureEventSystem();
             var prefab = Resources.Load<GameObject>("UI/MainUI");
             if (prefab == null)
             {
-                Debug.LogError("缺少 Resources/UI/MainUI.prefab，请通过 Slime/UI/Rebuild Main UI Prefab 重新生成。");
+                Debug.LogError("缺少 Resources/UI/MainUI.prefab。");
                 enabled = false;
-                return;
+                return false;
             }
 
             var instance = Instantiate(prefab, transform, false);
-            var refs = instance.GetComponent<MainUiReferences>();
-            if (refs == null)
+            uiRefs = instance.GetComponent<MainUiReferences>();
+            if (uiRefs == null)
             {
                 Debug.LogError("MainUI.prefab 缺少 MainUiReferences 组件。");
                 enabled = false;
-                return;
+                return false;
             }
 
             foreach (var text in instance.GetComponentsInChildren<TMP_Text>(true))
                 if (runtimeFont != null) text.font = runtimeFont;
 
-            playerText = refs.playerText;
-            resourceText = refs.resourceText;
-            boxText = refs.boxText;
-            timerText = refs.timerText;
-            messageText = refs.messageText;
-            openButton = refs.openButton;
-            openButton.gameObject.SetActive(false);
-            inventoryContent = refs.inventoryContent;
-            dictionaryContent = refs.dictionaryContent;
-            guildContent = refs.guildContent;
-            boxInventoryContent = refs.boxInventoryContent;
-            boxQualityContent = refs.boxQualityContent;
-            cultivatePanel = refs.homePage;
-            inventoryPanel = refs.inventoryPage;
-            boxPanel = refs.boxPage;
-            dictionaryPanel = refs.dictionaryPage;
-            guildPanel = refs.guildPage;
-            uiRefs = refs;
-
-            refs.claimButton.onClick.AddListener(controller.ClaimBoxes);
-            refs.homeTab.onClick.AddListener(() => ShowTab(cultivatePanel));
-            refs.inventoryTab.onClick.AddListener(() => ShowTab(inventoryPanel));
-            refs.boxTab.onClick.AddListener(() => ShowTab(boxPanel));
-            refs.inventoryPreviousPage.onClick.AddListener(() => ChangeInventoryPage(-1));
-            refs.inventoryNextPage.onClick.AddListener(() => ChangeInventoryPage(1));
-            refs.dictionaryTab.onClick.AddListener(() => ShowTab(dictionaryPanel));
-            refs.guildTab.onClick.AddListener(() => ShowTab(guildPanel));
-            refs.gmAddOne.onClick.AddListener(() => controller.GmBoxes("add", 1));
-            refs.gmAddEight.onClick.AddListener(() => controller.GmBoxes("add", 8));
-            refs.gmFill.onClick.AddListener(() => controller.GmBoxes("fill", 0));
-            refs.gmClear.onClick.AddListener(() => controller.GmBoxes("clear", 0));
-            refs.gmAdvance.onClick.AddListener(() => controller.GmBoxes("advance", 3));
-            refs.selectedBoxOpenButton.onClick.AddListener(OpenSelectedBox);
-            boxAnimator = refs.selectedBoxImage.gameObject.AddComponent<BoxOpenAnimator>();
-            boxAnimator.Initialize(refs.selectedBoxImage);
+            slotPrefab = Resources.Load<BoxSlotItemView>("UI/BoxSlotItem");
+            inventoryItemPrefab = Resources.Load<GameObject>("UI/InventoryItem");
+            inventorySlimeSprites = Resources.LoadAll<Sprite>("PixelAdventure/SlimeIdle");
             boxQualitySprites = new[]
             {
                 Resources.Load<Sprite>("icon/宝箱1"),
@@ -146,23 +103,47 @@ namespace SlimeBlindBox.UI
                 Resources.Load<Sprite>("icon/宝箱4"),
                 Resources.Load<Sprite>("icon/宝箱5"),
             };
-            InitializeSettings(instance.transform, refs);
+            pages = new[] { uiRefs.inventoryPage, uiRefs.boxPage, uiRefs.dictionaryPage, uiRefs.guildPage };
 
-            var frames = Resources.LoadAll<Sprite>("PixelAdventure/SlimeIdle");
-            if (refs.slimeImage != null && frames.Length > 0)
-            {
-                var animator = refs.slimeImage.gameObject.AddComponent<PixelSlimeAnimator>();
-                animator.Initialize(refs.slimeImage, frames);
-            }
-            ShowTab(cultivatePanel);
+            uiRefs.claimButton.onClick.AddListener(controller.ClaimBoxes);
+            uiRefs.boxTab.onClick.AddListener(() => TogglePage(uiRefs.boxPage));
+            uiRefs.inventoryTab.onClick.AddListener(() => TogglePage(uiRefs.inventoryPage));
+            uiRefs.dictionaryTab.onClick.AddListener(() => TogglePage(uiRefs.dictionaryPage));
+            uiRefs.slimeModeButton.onClick.AddListener(() => SetDisplayMode(DisplayModeSlime));
+            uiRefs.boxModeButton.onClick.AddListener(() => SetDisplayMode(DisplayModeBox));
+            uiRefs.inventoryPreviousPage.onClick.AddListener(() => ChangeInventoryPage(-1));
+            uiRefs.inventoryNextPage.onClick.AddListener(() => ChangeInventoryPage(1));
+            uiRefs.selectedBoxOpenButton.onClick.AddListener(OpenSelectedBox);
+            BindDeveloperTools();
+
+            boxAnimator = uiRefs.selectedBoxImage.gameObject.AddComponent<BoxOpenAnimator>();
+            boxAnimator.Initialize(uiRefs.selectedBoxImage);
+            InitializeSettings(instance.transform);
+            SetDisplayMode(PlayerPrefs.GetInt(DisplayModeKey, DisplayModeSlime), false);
+            ShowHome();
+            return true;
         }
 
-        private void InitializeSettings(Transform uiRoot, MainUiReferences refs)
+        private void BindDeveloperTools()
+        {
+            // GM 只在 Editor 和 Development Build 中出现，Release 构建不显示也不绑定。
+            var available = Debug.isDebugBuild;
+            uiRefs.gmPanel.SetActive(available);
+            if (!available) return;
+            uiRefs.gmAddOne.onClick.AddListener(() => controller.GmBoxes("add", 1));
+            uiRefs.gmAddEight.onClick.AddListener(() => controller.GmBoxes("add", 8));
+            uiRefs.gmFill.onClick.AddListener(() => controller.GmBoxes("fill", 0));
+            uiRefs.gmClear.onClick.AddListener(() => controller.GmBoxes("clear", 0));
+            uiRefs.gmAdvance.onClick.AddListener(() => controller.GmBoxes("advance", 3));
+        }
+
+        private void InitializeSettings(Transform uiRoot)
         {
             var prefab = Resources.Load<GameObject>("UI/GameSettings");
-            if (prefab == null || refs.settingsButton == null)
+            if (prefab == null)
             {
-                Debug.LogError("缺少 Resources/UI/GameSettings.prefab 或设置按钮引用，请重新生成 Main UI Prefab。");
+                Debug.LogError("缺少 Resources/UI/GameSettings.prefab。");
+                uiRefs.settingsButton.interactable = false;
                 return;
             }
 
@@ -172,49 +153,108 @@ namespace SlimeBlindBox.UI
             {
                 Debug.LogError("GameSettings.prefab 缺少 GameSettingsView 组件。");
                 Destroy(instance);
+                uiRefs.settingsButton.interactable = false;
                 return;
             }
 
             settingsView.Initialize(runtimeFont);
             instance.SetActive(false);
-            refs.settingsButton.onClick.AddListener(settingsView.Show);
+            uiRefs.settingsButton.onClick.AddListener(settingsView.Show);
+        }
+
+        private void SetDisplayMode(int mode, bool save = true)
+        {
+            var showSlime = mode != DisplayModeBox;
+            uiRefs.slimeArea.gameObject.SetActive(showSlime);
+            uiRefs.boxShowcase.SetActive(!showSlime);
+            uiRefs.slimeModeImage.color = showSlime ? Color.white : Color.clear;
+            uiRefs.boxModeImage.color = showSlime ? Color.clear : Color.white;
+            uiRefs.slimeModeText.color = showSlime ? ModeSelectedTextColor : TextColor;
+            uiRefs.boxModeText.color = showSlime ? TextColor : ModeSelectedTextColor;
+            if (!save) return;
+            PlayerPrefs.SetInt(DisplayModeKey, showSlime ? DisplayModeSlime : DisplayModeBox);
+            PlayerPrefs.Save();
+        }
+
+        private void TogglePage(GameObject target)
+        {
+            if (target.activeSelf) ShowHome();
+            else ShowPage(target);
+        }
+
+        private void ShowHome() => ShowPage(null);
+
+        private void ShowPage(GameObject target)
+        {
+            foreach (var page in pages) if (page != null) page.SetActive(page == target);
+            uiRefs.contentArea.SetActive(target != null);
+            uiRefs.homePage.SetActive(target == null);
         }
 
         private void Render()
         {
-            if (!isUiReady || controller == null || playerText == null || boxText == null
-                || messageText == null || openButton == null || inventoryContent == null
-                || dictionaryContent == null || guildContent == null)
-            {
-                return;
-            }
-
+            if (!isUiReady) return;
             var user = controller.User;
             var state = controller.GameState;
-            playerText.text = user == null ? "开发账号登录中……" : $"玩家：{user.nickname}";
-            if (resourceText != null && user != null)
-                resourceText.text = $"CP  {state?.total_cp ?? user.total_cp}";
-            boxText.text = state == null ? "盲盒：--" : $"盲盒：{state.box_count} / {state.box_capacity}";
-            messageText.text = controller.IsBusy ? "处理中……" : controller.LastMessage;
-            openButton.interactable = !controller.IsBusy && state != null && state.box_count > 0;
-            nextBoxAt = default;
-            if (state != null && !string.IsNullOrEmpty(state.next_box_at))
-            {
-                DateTime.TryParse(
-                    state.next_box_at,
-                    null,
-                    System.Globalization.DateTimeStyles.RoundtripKind,
-                    out nextBoxAt);
-            }
+
+            var totalCp = state?.total_cp ?? user?.total_cp ?? 0;
+            uiRefs.resourceText.text = string.Format(MainUiText.TotalCpFormat, totalCp);
+            uiRefs.messageText.text = controller.IsBusy ? MainUiText.Processing : controller.LastMessage;
+            RenderPlatform(state);
+            RenderWarehouseBadge(state);
             RenderInventory();
             RenderDictionary();
             RenderGuild();
             RenderBoxInventory();
         }
 
+        private void RenderPlatform(GameStateDto state)
+        {
+            uiRefs.boxText.text = state == null
+                ? MainUiText.PendingUnknown
+                : string.Format(MainUiText.PendingFormat, state.box_count, state.box_capacity);
+            uiRefs.claimButton.interactable = !controller.IsBusy && state != null && state.box_count > 0;
+            RenderSlots(state?.box_count ?? 0, state?.box_capacity ?? 0);
+
+            boxIntervalSeconds = state != null && state.box_interval_seconds > 0 ? state.box_interval_seconds : DefaultBoxIntervalSeconds;
+            nextBoxAt = default;
+            lastShownSecond = -1;
+            if (state == null) return;
+            if (string.IsNullOrEmpty(state.next_box_at))
+            {
+                uiRefs.timerText.text = MainUiText.PlatformFull;
+                uiRefs.productionBar.value = 1f;
+                return;
+            }
+            if (!DateTime.TryParse(state.next_box_at, null, System.Globalization.DateTimeStyles.RoundtripKind, out nextBoxAt))
+                uiRefs.timerText.text = MainUiText.SyncingTime;
+        }
+
+        private void RenderSlots(int filled, int capacity)
+        {
+            var content = uiRefs.boxSlotContent;
+            if (slotPrefab == null || content == null) return;
+            for (var index = content.childCount; index < capacity; index++) Instantiate(slotPrefab, content, false);
+            for (var index = 0; index < content.childCount; index++)
+            {
+                var slot = content.GetChild(index);
+                slot.gameObject.SetActive(index < capacity);
+                if (index < capacity) slot.GetComponent<BoxSlotItemView>().SetFilled(index < filled);
+            }
+        }
+
+        private void RenderWarehouseBadge(GameStateDto state)
+        {
+            var total = 0;
+            if (state?.box_inventory != null) foreach (var box in state.box_inventory) total += box.quantity;
+            uiRefs.warehouseBadge.SetActive(total > 0);
+            uiRefs.warehouseBadgeText.text = total > BadgeMaximum ? MainUiText.BadgeOverflow : total.ToString();
+        }
+
         private void RenderBoxInventory()
         {
-            if (boxQualityContent == null || uiRefs == null) return;
+            if (uiRefs.boxQualityContent == null) return;
+            var boxQualityContent = uiRefs.boxQualityContent;
             Clear(boxQualityContent);
             var boxes = controller.GameState?.box_inventory;
             if (boxes == null) return;
@@ -252,16 +292,16 @@ namespace SlimeBlindBox.UI
         private void SelectBox(string key, bool updateMessage = true)
         {
             var box = Array.Find(controller.GameState?.box_inventory, item => item.key == key);
-            if (box == null || uiRefs == null) return;
+            if (box == null) return;
             selectedBoxKey = key;
             if (!ColorUtility.TryParseHtmlString(box.color, out selectedBoxColor)) selectedBoxColor = Color.white;
-            uiRefs.selectedBoxName.text = $"{box.name}盲盒";
-            uiRefs.selectedBoxCount.text = $"持有 {box.quantity} 个";
+            uiRefs.selectedBoxName.text = string.Format(MainUiText.BoxNameFormat, box.name);
+            uiRefs.selectedBoxCount.text = string.Format(MainUiText.BoxOwnedFormat, box.quantity);
             uiRefs.selectedBoxImage.sprite = GetBoxSprite(key);
             uiRefs.selectedBoxImage.color = Color.white;
             uiRefs.selectedBoxImage.preserveAspect = true;
             uiRefs.selectedBoxOpenButton.interactable = !controller.IsBusy && box.quantity > 0;
-            if (updateMessage) uiRefs.boxOpenHint.text = box.quantity > 0 ? "点击开启按钮打开 1 个" : "该品质盲盒库存为空";
+            if (updateMessage) uiRefs.boxOpenHint.text = box.quantity > 0 ? MainUiText.BoxOpenHint : MainUiText.BoxStockEmpty;
             if (updateMessage) RenderBoxInventory();
         }
 
@@ -287,30 +327,28 @@ namespace SlimeBlindBox.UI
         private System.Collections.IEnumerator PlayBoxAndOpen()
         {
             uiRefs.selectedBoxOpenButton.interactable = false;
-            uiRefs.boxOpenHint.text = "盲盒开启中……";
+            uiRefs.boxOpenHint.text = MainUiText.BoxOpening;
             yield return boxAnimator.Play(selectedBoxColor);
             controller.OpenBox(selectedBoxKey);
         }
 
         private void RenderInventory()
         {
+            var inventoryContent = uiRefs.inventoryContent;
+            if (inventoryContent == null) return;
             Clear(inventoryContent);
-            if (controller.Inventory.Length == 0) CreateText(inventoryContent, "暂无史莱姆", 18, TextAlignmentOptions.Center);
+            if (controller.Inventory.Length == 0) CreateText(inventoryContent, MainUiText.EmptyInventory, 18, TextAlignmentOptions.Center);
             var totalPages = Mathf.Max(1, Mathf.CeilToInt(controller.Inventory.Length / (float)InventoryPageSize));
             inventoryPageIndex = Mathf.Clamp(inventoryPageIndex, 0, totalPages - 1);
-            if (uiRefs != null)
-            {
-                uiRefs.inventoryPageText.text = $"{inventoryPageIndex + 1} / {totalPages}";
-                uiRefs.inventoryPreviousPage.interactable = inventoryPageIndex > 0;
-                uiRefs.inventoryNextPage.interactable = inventoryPageIndex < totalPages - 1;
-            }
+            uiRefs.inventoryPageText.text = string.Format(MainUiText.PageFormat, inventoryPageIndex + 1, totalPages);
+            uiRefs.inventoryPreviousPage.interactable = inventoryPageIndex > 0;
+            uiRefs.inventoryNextPage.interactable = inventoryPageIndex < totalPages - 1;
             var start = inventoryPageIndex * InventoryPageSize;
             var end = Mathf.Min(start + InventoryPageSize, controller.Inventory.Length);
             for (var itemIndex = start; itemIndex < end; itemIndex++)
             {
                 var item = controller.Inventory[itemIndex];
-                var template = Resources.Load<GameObject>("UI/InventoryItem");
-                var row = template != null ? Instantiate(template, inventoryContent) : Panel(inventoryContent, $"Slime_{item.slime_id}", PanelAltColor);
+                var row = inventoryItemPrefab != null ? Instantiate(inventoryItemPrefab, inventoryContent) : Panel(inventoryContent, $"Slime_{item.slime_id}", PanelAltColor);
                 row.name = $"Slime_{item.slime_id}";
                 foreach (var text in row.GetComponentsInChildren<TMP_Text>(true)) if (runtimeFont != null) text.font = runtimeFont;
                 var view = row.GetComponent<InventoryItemView>();
@@ -318,8 +356,7 @@ namespace SlimeBlindBox.UI
                 view.nameText.text = $"{item.name} [{item.rarity}]";
                 view.detailText.text = $"数量 × {item.quantity}\nLv.{item.level}  CP {item.effective_cp}";
                 ApplyRarity(view.nameText, item.rarity_key, item.rarity_color);
-                var slimeFrames = Resources.LoadAll<Sprite>("PixelAdventure/SlimeIdle");
-                if (slimeFrames.Length > 0) view.icon.sprite = slimeFrames[Mathf.Abs(item.slime_id) % slimeFrames.Length];
+                if (inventorySlimeSprites.Length > 0) view.icon.sprite = inventorySlimeSprites[Mathf.Abs(item.slime_id) % inventorySlimeSprites.Length];
                 if (ColorUtility.TryParseHtmlString(item.rarity_color, out var iconColor)) view.icon.color = Color.Lerp(Color.white, iconColor, .3f);
             }
             Canvas.ForceUpdateCanvases();
@@ -336,6 +373,8 @@ namespace SlimeBlindBox.UI
 
         private void RenderDictionary()
         {
+            var dictionaryContent = uiRefs.dictionaryContent;
+            if (dictionaryContent == null) return;
             Clear(dictionaryContent);
             var data = controller.Dictionary;
             if (data == null) return;
@@ -349,6 +388,8 @@ namespace SlimeBlindBox.UI
 
         private void RenderGuild()
         {
+            var guildContent = uiRefs.guildContent;
+            if (guildContent == null) return;
             Clear(guildContent);
             var data = controller.Guild;
             if (data == null || !data.has_guild)
@@ -373,45 +414,11 @@ namespace SlimeBlindBox.UI
             }
         }
 
-        private static Transform CreateList(Transform parent, string title)
-        {
-            var panel = Panel(parent, title, PanelColor);
-            panel.AddComponent<LayoutElement>().flexibleWidth = 1;
-            var vertical = panel.AddComponent<VerticalLayoutGroup>();
-            vertical.padding = new RectOffset(12, 12, 12, 12);
-            vertical.spacing = 6;
-            CreateText(panel.transform, title, 23, TextAlignmentOptions.Center);
-            var content = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-            content.transform.SetParent(panel.transform, false);
-            content.GetComponent<VerticalLayoutGroup>().spacing = 5;
-            content.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            return content.transform;
-        }
-
-        private static GameObject CreatePage(Transform parent, string name)
-        {
-            var page = Panel(parent, name, PanelColor);
-            page.AddComponent<LayoutElement>().flexibleHeight = 1;
-            var layout = page.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(12, 12, 12, 12);
-            layout.spacing = 6;
-            return page;
-        }
-
-        private void ShowTab(GameObject target)
-        {
-            var pages = new[] { cultivatePanel, inventoryPanel, boxPanel, dictionaryPanel, guildPanel };
-            foreach (var page in pages) if (page != null) page.SetActive(page == target);
-        }
-
         private static GameObject Panel(Transform parent, string name, Color color)
         {
             var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(parent, false);
             panel.GetComponent<Image>().color = color;
-            var outline = panel.AddComponent<Outline>();
-            outline.effectColor = BorderColor;
-            outline.effectDistance = new Vector2(3, -3);
             return panel;
         }
 
@@ -425,6 +432,7 @@ namespace SlimeBlindBox.UI
             text.fontSize = size;
             text.alignment = alignment;
             text.color = TextColor;
+            text.raycastTarget = false;
             textObject.GetComponent<LayoutElement>().preferredHeight = size + 14;
             return text;
         }
@@ -440,56 +448,16 @@ namespace SlimeBlindBox.UI
             var buttonObject = Panel(parent, label, AccentDarkColor);
             var button = buttonObject.AddComponent<Button>();
             button.targetGraphic = buttonObject.GetComponent<Image>();
-            var colors = button.colors;
-            colors.normalColor = AccentDarkColor;
-            colors.highlightedColor = AccentColor;
-            colors.pressedColor = new Color32(24, 87, 67, 255);
-            colors.disabledColor = new Color32(65, 62, 82, 255);
-            colors.colorMultiplier = 1;
-            button.colors = colors;
             button.onClick.AddListener(action);
-            CreateText(buttonObject.transform, label, 19, TextAlignmentOptions.Center);
+            var text = CreateText(buttonObject.transform, label, 19, TextAlignmentOptions.Center);
+            text.color = Color.white;
             buttonObject.AddComponent<LayoutElement>().preferredWidth = 130;
             return button;
-        }
-
-        private static void CreateSlimeShowcase(Transform parent)
-        {
-            var showcase = Panel(parent, "SlimeShowcase", PanelAltColor);
-            showcase.AddComponent<LayoutElement>().preferredHeight = 180;
-            var label = CreateText(showcase.transform, "史莱姆培养皿", 24, TextAlignmentOptions.Top);
-            Stretch(label.rectTransform);
-
-            var sprites = Resources.LoadAll<Sprite>("PixelAdventure/SlimeIdle");
-            if (sprites == null || sprites.Length == 0)
-            {
-                CreateText(showcase.transform, "Pixel Adventure 2 Slime", 20, TextAlignmentOptions.Center).color = MutedTextColor;
-                return;
-            }
-
-            var slime = new GameObject("AnimatedSlime", typeof(RectTransform), typeof(Image), typeof(PixelSlimeAnimator));
-            slime.transform.SetParent(showcase.transform, false);
-            var rect = slime.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(176, 120);
-            rect.anchoredPosition = new Vector2(0, -12);
-            var image = slime.GetComponent<Image>();
-            image.preserveAspect = true;
-            image.color = Color.white;
-            slime.GetComponent<PixelSlimeAnimator>().Initialize(image, sprites);
         }
 
         private static void Clear(Transform target)
         {
             for (var i = target.childCount - 1; i >= 0; i--) Destroy(target.GetChild(i).gameObject);
-        }
-
-        private static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
         }
 
         private static void EnsureEventSystem()

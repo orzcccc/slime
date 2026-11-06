@@ -41,6 +41,7 @@ namespace SlimeBlindBox.Networking
     {
         public int box_count;
         public int box_capacity;
+        public int box_interval_seconds;
         public int total_cp;
         public string server_time;
         public string next_box_at;

@@ -3,7 +3,7 @@
 > 状态：规则已确认；客户端尚未迁移（见“十一、迁移待办”）
 > 最后更新：2026-11-05  
 > 主策划入口：[《史莱姆盲盒》项目策划案](../史莱姆盲盒-项目策划案.md)  
-> 关联代码：`Assets/Scripts/UI/SafeAreaFitter.cs`、`Assets/Scripts/UI/MainUiReferences.cs`、`Assets/Scripts/UI/GameSettingsView.cs`、`Assets/Scripts/UI/ResponsiveMainUi.cs`  
+> 关联代码：`Assets/Scripts/UI/SafeAreaFitter.cs`、`Assets/Scripts/UI/MainUiReferences.cs`、`Assets/Scripts/UI/GameSettingsView.cs`  
 > 关联文档：[预览图生成 UI 预制规则](预览图生成UI预制规则.md)、[桌面岛屿窗口系统](桌面岛屿窗口系统.md)
 
 ## 一、游戏前提
@@ -154,8 +154,8 @@ xxxScroll        ScrollRect（movementType = Clamped）
 - [x] 导入项目字体 `KeinannMaruPOP.ttf`，作为 TMP 动态 SDF 字体资产的源字体；运行时不再依赖系统字体。
 - [x] 用 `KeinannMaruPOP.ttf` 生成动态 SDF TMP 字体资产 `Assets/Resources/Fonts/KeinannMaruPOP SDF.asset`，并将主界面、设置弹窗、背包项、盲盒品质项及运行时动态文本迁移为 `TextMeshProUGUI`。
 - [ ] 核验荆南麦圆体的商用与再分发授权，保存作者授权声明并记入授权清单。
-- [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`；CanvasScaler 改为 `800×800`、match `0.5`。
-- [ ] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。
+- [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`。（CanvasScaler 已改为 `800×800`、match `0.5`，仍在预制根节点上）
+- [x] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。
 - [ ] `SafeAreaFitter` 改为按第六节修改 offset。
-- [ ] 节点名改为英文驼峰（例如 `开启盲盒` → `openBoxButton`），同步更新引用。
+- [ ] 节点名改为英文驼峰（例如 `开启盲盒` → `openBoxButton`），同步更新引用。（首页、顶栏、功能坞已完成；背包、仓库、图鉴页待改）
 - [ ] 设置弹窗补齐 `mask` / `panel` 结构。
