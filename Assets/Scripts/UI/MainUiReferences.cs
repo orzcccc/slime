@@ -42,12 +42,10 @@ namespace SlimeBlindBox.UI
         public GameObject inventoryPage;
         public GameObject boxPage;
         public GameObject dictionaryPage;
-        public GameObject guildPage;
         public Transform boxInventoryContent;
         public Transform inventoryContent;
         public Transform boxQualityContent;
         public Transform dictionaryContent;
-        public Transform guildContent;
         public Button inventoryPreviousPage;
         public Button inventoryNextPage;
         public TMP_Text inventoryPageText;

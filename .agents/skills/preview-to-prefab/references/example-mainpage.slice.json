@@ -1,0 +1,382 @@
+{
+ "source": "ArtSource/MainPage/MainPageConcept.png",
+ "out": ".codex_tmp/slice/main",
+ "order": [
+  "island",
+  "tabbar_bg",
+  "tab_bg_gallery",
+  "tab_bg_bag",
+  "tab_bg_trade",
+  "tab_bg_explore",
+  "icon_gallery",
+  "icon_bag",
+  "icon_trade",
+  "icon_explore",
+  "chest",
+  "slime",
+  "egg",
+  "bubble_bg",
+  "icon_clock"
+ ],
+ "parts": [
+  {
+   "name": "chest",
+   "box": [
+    236,
+    488,
+    500,
+    705
+   ],
+   "seed": [
+    360,
+    560
+   ],
+   "smooth": 3,
+   "folder": "Props",
+   "file": "Chest"
+  },
+  {
+   "name": "slime",
+   "box": [
+    505,
+    440,
+    775,
+    705
+   ],
+   "seed": [
+    600,
+    620
+   ],
+   "smooth": 3,
+   "folder": "Slime",
+   "file": "Slime"
+  },
+  {
+   "name": "egg",
+   "box": [
+    785,
+    385,
+    1005,
+    700
+   ],
+   "seed": [
+    900,
+    600
+   ],
+   "smooth": 3,
+   "folder": "Props",
+   "file": "Egg"
+  },
+  {
+   "name": "bubble_bg",
+   "box": [
+    236,
+    362,
+    498,
+    500
+   ],
+   "seed": [
+    262,
+    462
+   ],
+   "smooth": 4,
+   "erase": [
+    {
+     "part": "icon_clock",
+     "grow": 3
+    },
+    {
+     "text": [
+      330,
+      380,
+      480,
+      460
+     ],
+     "pad": 3
+    }
+   ],
+   "fill": "smooth",
+   "folder": "TimerBubble",
+   "file": "TimerBubbleBg"
+  },
+  {
+   "name": "icon_clock",
+   "box": [
+    252,
+    382,
+    335,
+    462
+   ],
+   "seed": [
+    300,
+    408
+   ],
+   "smooth": 2,
+   "folder": "TimerBubble",
+   "file": "ClockIcon"
+  },
+  {
+   "name": "tab_bg_gallery",
+   "box": [
+    300,
+    880,
+    465,
+    1075
+   ],
+   "seed": [
+    330,
+    960
+   ],
+   "smooth": 10,
+   "erase": [
+    {
+     "part": "icon_gallery",
+     "grow": 6
+    },
+    {
+     "text": [
+      320,
+      1015,
+      450,
+      1065
+     ]
+    }
+   ],
+   "fill": "gradient",
+   "folder": "TabBar/TabBg",
+   "file": "TabBgGallery",
+   "border": 40
+  },
+  {
+   "name": "tab_bg_bag",
+   "box": [
+    460,
+    880,
+    620,
+    1075
+   ],
+   "seed": [
+    480,
+    960
+   ],
+   "smooth": 10,
+   "erase": [
+    {
+     "part": "icon_bag",
+     "grow": 6
+    },
+    {
+     "text": [
+      475,
+      1015,
+      610,
+      1065
+     ]
+    }
+   ],
+   "fill": "gradient",
+   "folder": "TabBar/TabBg",
+   "file": "TabBgBag",
+   "border": 40
+  },
+  {
+   "name": "tab_bg_trade",
+   "box": [
+    625,
+    880,
+    790,
+    1075
+   ],
+   "seed": [
+    650,
+    960
+   ],
+   "smooth": 10,
+   "erase": [
+    {
+     "part": "icon_trade",
+     "grow": 6
+    },
+    {
+     "text": [
+      640,
+      1015,
+      775,
+      1065
+     ]
+    }
+   ],
+   "fill": "gradient",
+   "folder": "TabBar/TabBg",
+   "file": "TabBgTrade",
+   "border": 40
+  },
+  {
+   "name": "tab_bg_explore",
+   "box": [
+    785,
+    880,
+    955,
+    1075
+   ],
+   "seed": [
+    810,
+    960
+   ],
+   "smooth": 10,
+   "erase": [
+    {
+     "part": "icon_explore",
+     "grow": 6
+    },
+    {
+     "text": [
+      800,
+      1015,
+      945,
+      1065
+     ]
+    }
+   ],
+   "fill": "gradient",
+   "folder": "TabBar/TabBg",
+   "file": "TabBgExplore",
+   "border": 40
+  },
+  {
+   "name": "icon_gallery",
+   "mode": "inner",
+   "of": "tab_bg_gallery",
+   "box": [
+    319,
+    898,
+    447,
+    1017
+   ],
+   "folder": "TabBar/Icons",
+   "file": "IconGallery"
+  },
+  {
+   "name": "icon_bag",
+   "mode": "inner",
+   "of": "tab_bg_bag",
+   "box": [
+    473,
+    898,
+    610,
+    1017
+   ],
+   "folder": "TabBar/Icons",
+   "file": "IconBag"
+  },
+  {
+   "name": "icon_trade",
+   "mode": "inner",
+   "of": "tab_bg_trade",
+   "box": [
+    632,
+    898,
+    773,
+    1017
+   ],
+   "folder": "TabBar/Icons",
+   "file": "IconTrade"
+  },
+  {
+   "name": "icon_explore",
+   "mode": "inner",
+   "of": "tab_bg_explore",
+   "box": [
+    802,
+    898,
+    946,
+    1017
+   ],
+   "folder": "TabBar/Icons",
+   "file": "IconExplore"
+  },
+  {
+   "name": "tabbar_bg",
+   "mode": "region",
+   "box": [
+    250,
+    862,
+    1005,
+    1100
+   ],
+   "dark": 45,
+   "seeds": [
+    [
+     340,
+     885
+    ],
+    [
+     500,
+     885
+    ],
+    [
+     660,
+     885
+    ],
+    [
+     820,
+     885
+    ],
+    [
+     340,
+     1066
+    ],
+    [
+     580,
+     1066
+    ],
+    [
+     900,
+     1066
+    ]
+   ],
+   "grow": 6,
+   "erase": [
+    {
+     "part": "tab_bg_gallery",
+     "grow": 2
+    },
+    {
+     "part": "tab_bg_bag",
+     "grow": 2
+    },
+    {
+     "part": "tab_bg_trade",
+     "grow": 2
+    },
+    {
+     "part": "tab_bg_explore",
+     "grow": 2
+    }
+   ],
+   "keep_edge": 0,
+   "fill": "smooth",
+   "folder": "TabBar",
+   "file": "TabBarBg"
+  },
+  {
+   "name": "island",
+   "mode": "rest",
+   "under": [
+    "chest",
+    "slime",
+    "egg",
+    "bubble_bg",
+    {
+     "part": "tabbar_bg",
+     "extend": false
+    }
+   ],
+   "fill": "texture",
+   "ai": "This is a floating grassy island. Complete the three round sand-coloured pedestal rings with dark teal centres that sat under removed props, continue the grass and small plants, and continue the rocky cliff underside with its thick dark outline.",
+   "folder": "Island",
+   "file": "Island",
+   "readable": true
+  }
+ ]
+}

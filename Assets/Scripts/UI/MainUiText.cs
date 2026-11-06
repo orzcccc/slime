@@ -3,6 +3,12 @@ namespace SlimeBlindBox.UI
     /// <summary>主界面面向玩家的文案。集中放在这里，后续接入本地化时统一替换。</summary>
     public static class MainUiText
     {
+        public const string Starting = "正在启动……";
+        public const string LocalPlayerName = "史莱姆饲养员";
+        public const string WelcomeFormat = "欢迎回来，{0}";
+        public const string ObtainedFormat = "获得 {0}（{1}）";
+        public const string ClaimedFormat = "已领取 {0} 个盲盒到仓库";
+        public const string DebugDone = "GM 操作成功";
         public const string Connecting = "正在连接……";
         public const string Processing = "处理中……";
         public const string TotalCpFormat = "总CP {0:N0}";

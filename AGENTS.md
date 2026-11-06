@@ -7,6 +7,7 @@
   - `development-plan-documentation.mdc`：方案与实现必须同步到 `Docs/`。
   - `unity-prefab-authoring.mdc`：Prefab 的创建与修改方式。
 - 规则之间冲突时，以用户的明确指示为准，并在交付说明中指出冲突。
+- 用户发来 UI 预览图、效果图或线框图，要求切图、补全图片或拼装/修改 UI 预制时，按 `.agents/skills/preview-to-prefab/SKILL.md` 执行，并优先使用其中的脚本。
 
 ## Git 提交
 

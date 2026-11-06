@@ -1,7 +1,7 @@
 # 预览图生成 UI 预制规则
 
 > 状态：规则已确认  
-> 最后更新：2026-11-05  
+> 最后更新：2026-11-06  
 > 主策划入口：[《史莱姆盲盒》项目策划案](../史莱姆盲盒-项目策划案.md)  
 > 关联文档：[最小 UI 框架](UI框架.md)、[桌面岛屿窗口系统](桌面岛屿窗口系统.md)、`.cursor/rules/unity-prefab-authoring.mdc`
 
@@ -123,3 +123,18 @@
 - [ ] 存在没有显隐、适配、裁剪或动画职责的空节点。
 - [ ] 预览图上能读出的文字在预制里是空的。
 - [ ] 预制由生成器脚本创建，或修改后未通过引用校验。
+
+## 七、工具链
+
+执行上述步骤时使用项目内 Skill [preview-to-prefab](../../.agents/skills/preview-to-prefab/SKILL.md) 的脚本：
+
+| 步骤 | 脚本 | 作用 |
+| --- | --- | --- |
+| 读图 | `slice_preview.py candidates` | 自动识别背景与描边区域，输出带坐标网格的标注图 |
+| 切图 | `slice_preview.py run` | 按 JSON 配置并行抠出透明切图，擦除图标/文字并算法补全，输出拼回对比图 |
+| 补全 | `ai_fill.py` | 被遮挡区域并行调用 AI 局部重绘，只替换遮罩内像素 |
+| 入库 | `install_sprites.py` | 复制到 `Assets/Resources/Sprites/`，生成固定 GUID 的 `.meta` 和参考分辨率坐标 |
+| 拼预制 | `prefab_build.py`、`prefab_lib.py` | 按 JSON 节点树创建或就地更新预制，填写引用组件字段 |
+| 检查 | `prefab_check.py`、`unity_compile_check.py` | 第 4 步的引用校验；按程序集离线编译 |
+
+这些脚本只直接编辑预制文本，不属于第 4 步禁止的“生成器脚本”（禁止的是在 Unity 中运行时拼装或覆盖 Prefab 的生成器）。

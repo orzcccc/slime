@@ -1,6 +1,6 @@
 using System;
 using SlimeBlindBox.App;
-using SlimeBlindBox.Networking;
+using SlimeBlindBox.Backend;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -103,7 +103,7 @@ namespace SlimeBlindBox.UI
                 Resources.Load<Sprite>("icon/宝箱4"),
                 Resources.Load<Sprite>("icon/宝箱5"),
             };
-            pages = new[] { uiRefs.inventoryPage, uiRefs.boxPage, uiRefs.dictionaryPage, uiRefs.guildPage };
+            pages = new[] { uiRefs.inventoryPage, uiRefs.boxPage, uiRefs.dictionaryPage };
 
             uiRefs.claimButton.onClick.AddListener(controller.ClaimBoxes);
             uiRefs.boxTab.onClick.AddListener(() => TogglePage(uiRefs.boxPage));
@@ -127,14 +127,14 @@ namespace SlimeBlindBox.UI
         private void BindDeveloperTools()
         {
             // GM 只在 Editor 和 Development Build 中出现，Release 构建不显示也不绑定。
-            var available = Debug.isDebugBuild;
+            var available = Debug.isDebugBuild && controller.SupportsDebugTools;
             uiRefs.gmPanel.SetActive(available);
             if (!available) return;
-            uiRefs.gmAddOne.onClick.AddListener(() => controller.GmBoxes("add", 1));
-            uiRefs.gmAddEight.onClick.AddListener(() => controller.GmBoxes("add", 8));
-            uiRefs.gmFill.onClick.AddListener(() => controller.GmBoxes("fill", 0));
-            uiRefs.gmClear.onClick.AddListener(() => controller.GmBoxes("clear", 0));
-            uiRefs.gmAdvance.onClick.AddListener(() => controller.GmBoxes("advance", 3));
+            uiRefs.gmAddOne.onClick.AddListener(() => controller.DebugModifyBoxes(DebugBoxAction.Add, 1));
+            uiRefs.gmAddEight.onClick.AddListener(() => controller.DebugModifyBoxes(DebugBoxAction.Add, 8));
+            uiRefs.gmFill.onClick.AddListener(() => controller.DebugModifyBoxes(DebugBoxAction.Fill, 0));
+            uiRefs.gmClear.onClick.AddListener(() => controller.DebugModifyBoxes(DebugBoxAction.Clear, 0));
+            uiRefs.gmAdvance.onClick.AddListener(() => controller.DebugModifyBoxes(DebugBoxAction.AdvanceHours, 3));
         }
 
         private void InitializeSettings(Transform uiRoot)
@@ -204,7 +204,6 @@ namespace SlimeBlindBox.UI
             RenderWarehouseBadge(state);
             RenderInventory();
             RenderDictionary();
-            RenderGuild();
             RenderBoxInventory();
         }
 
@@ -383,34 +382,6 @@ namespace SlimeBlindBox.UI
             {
                 var label = CreateText(dictionaryContent, item.discovered == 1 ? $"已发现  {item.name} [{item.rarity}]" : $"未发现  ??? [{item.rarity}]", 17, TextAlignmentOptions.MidlineLeft);
                 ApplyRarity(label, item.rarity_key, item.rarity_color);
-            }
-        }
-
-        private void RenderGuild()
-        {
-            var guildContent = uiRefs.guildContent;
-            if (guildContent == null) return;
-            Clear(guildContent);
-            var data = controller.Guild;
-            if (data == null || !data.has_guild)
-            {
-                CreateText(guildContent, "尚未加入公会", 20, TextAlignmentOptions.Center);
-                Button(guildContent, "创建个人公会", controller.CreateGuild);
-                return;
-            }
-            CreateText(guildContent, $"{data.guild.name}  资金 {data.guild.funds}  公会币 {data.guild_coins}", 20, TextAlignmentOptions.Center);
-            CreateText(guildContent, $"魔力节点 Lv.{data.guild.magic_level}  扩容 Lv.{data.guild.capacity_level}", 17, TextAlignmentOptions.Center);
-            Button(guildContent, "升级魔力节点", () => controller.UpgradeGuild("magic"));
-            Button(guildContent, "升级扩容", () => controller.UpgradeGuild("capacity"));
-            if (data.boss != null)
-            {
-                CreateText(guildContent, $"史莱姆王饥饿度：{data.boss.current_hunger}/{data.boss.max_hunger}", 18, TextAlignmentOptions.Center);
-                Button(guildContent, "今日投喂", controller.FeedBoss);
-            }
-            foreach (var item in controller.Inventory)
-            {
-                var id = item.slime_id;
-                Button(guildContent, $"捐献 1 只 {item.name}", () => controller.Donate(id));
             }
         }
 

@@ -1,6 +1,5 @@
 using SlimeBlindBox.App;
 using SlimeBlindBox.Desktop;
-using SlimeBlindBox.Networking;
 using UnityEngine;
 
 namespace SlimeBlindBox.UI
@@ -14,7 +13,6 @@ namespace SlimeBlindBox.UI
 
             var root = new GameObject("SlimeBlindBoxApp");
             Object.DontDestroyOnLoad(root);
-            root.AddComponent<SlimeApiClient>();
             root.AddComponent<SlimeGameController>();
             root.AddComponent<CoreLoopView>();
             root.AddComponent<DesktopWindowController>();

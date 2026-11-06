@@ -44,8 +44,3 @@ Thumbs.db
 # Local tool temp
 .codex_tmp/
 
-server/node_modules/
-server/.env
-server/data/
-server/test/*.db*
-npm-debug.log*

@@ -1,94 +1,155 @@
 using System;
-using System.Collections;
-using SlimeBlindBox.Networking;
+using System.Globalization;
+using SlimeBlindBox.Backend;
+using SlimeBlindBox.UI;
 using UnityEngine;
 
 namespace SlimeBlindBox.App
 {
+    /// <summary>
+    /// 游戏状态控制器：通过 IGameBackend 读取和修改玩家数据，并通知界面刷新。
+    /// 不直接修改任何玩家数据，所有改动都经由后端完成。
+    /// </summary>
     public sealed class SlimeGameController : MonoBehaviour
     {
-        [SerializeField] private SlimeApiClient apiClient;
-        [SerializeField] private string developmentPlayerId = "local-player";
+        private const float StateRefreshRetrySeconds = 5f;
+
+        private IGameBackend backend;
+        private int pendingRequests;
+        private DateTime nextBoxAtUtc = DateTime.MaxValue;
+        private float nextRefreshAllowedAt;
 
         public UserDto User { get; private set; }
         public GameStateDto GameState { get; private set; }
         public InventoryItemDto[] Inventory { get; private set; } = Array.Empty<InventoryItemDto>();
         public DictionaryResponse Dictionary { get; private set; }
-        public GuildStateResponse Guild { get; private set; }
-        public bool IsBusy { get; private set; }
-        public string LastMessage { get; private set; } = "正在启动……";
+        public bool IsBusy => pendingRequests > 0;
+        public bool IsLoggedIn => User != null;
+        public bool SupportsDebugTools => backend != null && backend.SupportsDebugTools;
+        public string LastMessage { get; private set; } = MainUiText.Starting;
 
         public event Action StateChanged;
 
-        private IEnumerator Start()
+        private void Awake()
         {
-            if (apiClient == null) apiClient = GetComponent<SlimeApiClient>();
-            yield return Run(apiClient.Login(
-                $"dev:{developmentPlayerId}",
-                response =>
-                {
-                    User = response.user;
-                    LastMessage = $"欢迎回来，{User.nickname}";
-                },
-                SetError));
-            if (apiClient.IsLoggedIn) yield return RefreshAll();
+            backend = GameBackendFactory.Create();
         }
 
-        public void OpenBox(string boxRarityKey = "WHITE")
+        private void Start()
+        {
+            Begin();
+            backend.Login(response =>
+            {
+                User = response.user;
+                LastMessage = string.Format(MainUiText.WelcomeFormat, User.nickname);
+                End();
+                RefreshAll();
+            }, Fail);
+        }
+
+        private void Update()
+        {
+            // 到达下一个盲盒的产出时间后自动同步一次状态，让待领取数量及时更新。
+            if (!IsLoggedIn || IsBusy || DateTime.UtcNow < nextBoxAtUtc || Time.unscaledTime < nextRefreshAllowedAt) return;
+            nextRefreshAllowedAt = Time.unscaledTime + StateRefreshRetrySeconds;
+            RefreshGameState();
+        }
+
+        public void OpenBox(string boxRarityKey)
         {
             if (IsBusy || GameState == null) return;
-            StartCoroutine(Run(apiClient.OpenBox(boxRarityKey,
-                response =>
-                {
-                    GameState = response.game_state;
-                    LastMessage = $"获得 {response.name}（{response.rarity}）";
-                    StartCoroutine(RefreshInventory());
-                },
-                SetError)));
+            Begin();
+            backend.OpenBox(boxRarityKey, response =>
+            {
+                SetGameState(response.game_state);
+                LastMessage = string.Format(MainUiText.ObtainedFormat, response.name, response.rarity);
+                End();
+                RefreshCollections();
+            }, Fail);
         }
 
         public void ClaimBoxes()
         {
             if (IsBusy || GameState == null || GameState.box_count <= 0) return;
-            StartCoroutine(Run(apiClient.ClaimBoxes(response =>
+            Begin();
+            backend.ClaimBoxes(response =>
             {
-                GameState = response.game_state;
-                LastMessage = $"已领取 {response.claimed} 个盲盒到仓库";
-            }, SetError)));
+                SetGameState(response.game_state);
+                LastMessage = string.Format(MainUiText.ClaimedFormat, response.claimed);
+                End();
+            }, Fail);
         }
 
-        public void CreateGuild() => StartCoroutine(Run(apiClient.CreateGuild("我的史莱姆公会", _ => { LastMessage = "公会创建成功"; StartCoroutine(RefreshAll()); }, SetError)));
-        public void Donate(int slimeId) => StartCoroutine(Run(apiClient.Donate(slimeId, 1, _ => { LastMessage = "捐献成功"; StartCoroutine(RefreshAll()); }, SetError)));
-        public void UpgradeGuild(string type) => StartCoroutine(Run(apiClient.UpgradeGuild(type, _ => { LastMessage = "科技升级成功"; StartCoroutine(RefreshAll()); }, SetError)));
-        public void FeedBoss() => StartCoroutine(Run(apiClient.FeedBoss(value => { LastMessage = $"投喂造成 {value.damage} 点效果"; StartCoroutine(RefreshAll()); }, SetError)));
-        public void GmBoxes(string action, int amount) => StartCoroutine(Run(apiClient.GmBoxes(action, amount, value => { GameState = value; LastMessage = "GM 操作成功"; }, SetError)));
-
-        public IEnumerator RefreshAll()
+        public void DebugModifyBoxes(DebugBoxAction action, int amount)
         {
-            yield return Run(apiClient.GetGameState(value => GameState = value, SetError));
-            yield return RefreshInventory();
-            yield return Run(apiClient.GetDictionary(value => Dictionary = value, SetError));
-            yield return Run(apiClient.GetGuild(value => Guild = value, SetError));
+            if (IsBusy || !SupportsDebugTools) return;
+            Begin();
+            backend.DebugModifyBoxes(action, amount, state =>
+            {
+                SetGameState(state);
+                LastMessage = MainUiText.DebugDone;
+                End();
+            }, Fail);
         }
 
-        private IEnumerator RefreshInventory()
+        public void RefreshAll()
         {
-            yield return Run(apiClient.GetInventory(value => Inventory = value.inventory, SetError));
+            RefreshGameState();
+            RefreshCollections();
         }
 
-        private IEnumerator Run(IEnumerator operation)
+        private void RefreshGameState()
         {
-            IsBusy = true;
+            Begin();
+            backend.GetGameState(state =>
+            {
+                SetGameState(state);
+                End();
+            }, Fail);
+        }
+
+        private void RefreshCollections()
+        {
+            Begin();
+            backend.GetInventory(response =>
+            {
+                Inventory = response.inventory ?? Array.Empty<InventoryItemDto>();
+                End();
+            }, Fail);
+            Begin();
+            backend.GetDictionary(response =>
+            {
+                Dictionary = response;
+                End();
+            }, Fail);
+        }
+
+        private void SetGameState(GameStateDto state)
+        {
+            GameState = state;
+            nextBoxAtUtc = DateTime.MaxValue;
+            if (state != null && !string.IsNullOrEmpty(state.next_box_at)
+                && DateTime.TryParse(state.next_box_at, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var parsed))
+                nextBoxAtUtc = parsed;
+        }
+
+        private void Begin()
+        {
+            pendingRequests++;
             StateChanged?.Invoke();
-            yield return operation;
-            IsBusy = false;
+        }
+
+        private void End()
+        {
+            pendingRequests = Math.Max(0, pendingRequests - 1);
             StateChanged?.Invoke();
         }
 
-        private void SetError(string error)
+        private void Fail(BackendError error)
         {
-            LastMessage = error;
-            StateChanged?.Invoke();
+            Debug.LogWarning("后端请求失败：" + error.code);
+            LastMessage = error.message;
+            End();
         }
     }
 }
