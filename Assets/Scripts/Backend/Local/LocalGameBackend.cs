@@ -159,7 +159,9 @@ namespace SlimeBlindBox.Backend.Local
                         level = record.level,
                         experience = record.experience,
                         next_level_experience = GameBalanceConfig.ExperienceForLevel(record.level),
+                        unit_effective_cp = GameBalanceConfig.UnitEffectiveCp(slime.BaseCp, record.level),
                         effective_cp = GameBalanceConfig.EffectiveCp(slime.BaseCp, record.level, record.quantity),
+                        level_cp_multiplier = (float)GameBalanceConfig.LevelCpMultiplier(record.level),
                         first_obtained_at = FormatTime(FromUnixMs(record.firstObtainedAtUnixMs)),
                     });
                 }

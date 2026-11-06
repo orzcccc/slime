@@ -153,6 +153,9 @@ namespace SlimeBlindBox.Backend.Tests
             var inventory = Ok<InventoryResponse>(backend.GetInventory);
             Assert.AreEqual(1, inventory.inventory.Length);
             Assert.AreEqual(1, inventory.inventory[0].quantity);
+            Assert.AreEqual(5, inventory.inventory[0].unit_effective_cp);
+            Assert.AreEqual(5, inventory.inventory[0].effective_cp);
+            Assert.AreEqual(1f, inventory.inventory[0].level_cp_multiplier);
 
             var dictionary = Ok<DictionaryResponse>(backend.GetDictionary);
             Assert.AreEqual(12, dictionary.total);
@@ -309,6 +312,15 @@ namespace SlimeBlindBox.Backend.Tests
             Assert.AreEqual(100, GameBalanceConfig.EffectiveCp(100, 1, 1));
             Assert.AreEqual(125, GameBalanceConfig.EffectiveCp(100, 2, 1));
             Assert.AreEqual(300, GameBalanceConfig.EffectiveCp(100, 4, 2));
+        }
+
+        [Test]
+        public void UnitEffectiveCpAndMultiplierMatchTotal()
+        {
+            Assert.AreEqual(1.25, GameBalanceConfig.LevelCpMultiplier(2), 1e-9);
+            Assert.AreEqual(1000, GameBalanceConfig.UnitEffectiveCp(800, 2));
+            Assert.AreEqual(3000, GameBalanceConfig.EffectiveCp(800, 2, 3));
+            Assert.AreEqual(1.0, GameBalanceConfig.LevelCpMultiplier(0), 1e-9);
         }
     }
 }

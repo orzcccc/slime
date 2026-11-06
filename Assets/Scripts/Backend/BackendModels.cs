@@ -78,7 +78,12 @@ namespace SlimeBlindBox.Backend
         public int level;
         public int experience;
         public int next_level_experience;
+        /// <summary>单只有效 CP（已含等级加成）。</summary>
+        public int unit_effective_cp;
+        /// <summary>本种合计有效 CP = 单只有效 CP × 数量。</summary>
         public int effective_cp;
+        /// <summary>等级加成倍率，例如 Lv.2 为 1.25。</summary>
+        public float level_cp_multiplier;
         public string first_obtained_at;
     }
 

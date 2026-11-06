@@ -155,12 +155,14 @@ namespace SlimeBlindBox.Backend
 
         public static int ExperienceForLevel(int level) => LevelExperienceBase + (level - 1) * LevelExperienceGrowth;
 
-        /// <summary>有效 CP = floor(基础 CP × (1 + log2(等级) × 0.25)) × 数量。</summary>
-        public static int EffectiveCp(int baseCp, int level, int quantity)
-        {
-            var perSlime = (int)Math.Floor(baseCp * (1 + Math.Log(Math.Max(1, level), 2) * LevelCpRate));
-            return perSlime * quantity;
-        }
+        /// <summary>等级对 CP 的加成倍率：1 + log2(等级) × 0.25。</summary>
+        public static double LevelCpMultiplier(int level) => 1 + Math.Log(Math.Max(1, level), 2) * LevelCpRate;
+
+        /// <summary>单只有效 CP = floor(基础 CP × 等级加成倍率)。</summary>
+        public static int UnitEffectiveCp(int baseCp, int level) => (int)Math.Floor(baseCp * LevelCpMultiplier(level));
+
+        /// <summary>有效 CP = 单只有效 CP × 数量。</summary>
+        public static int EffectiveCp(int baseCp, int level, int quantity) => UnitEffectiveCp(baseCp, level) * quantity;
 
         /// <summary>校验配置完整性，返回全部问题；空列表表示配置有效。</summary>
         public static List<string> Validate()
