@@ -126,8 +126,8 @@ namespace SlimeBlindBox.UI
 
         private void BindDeveloperTools()
         {
-            // GM 只在 Editor 和 Development Build 中出现，Release 构建不显示也不绑定。
-            var available = Debug.isDebugBuild && controller.SupportsDebugTools;
+            // GM 是否可用由后端决定（GameBackendFactory.DeveloperToolsEnabled），正式打包的游戏同样适用。
+            var available = controller.SupportsDebugTools;
             uiRefs.gmPanel.SetActive(available);
             if (!available) return;
             uiRefs.gmAddOne.onClick.AddListener(() => controller.DebugModifyBoxes(DebugBoxAction.Add, 1));

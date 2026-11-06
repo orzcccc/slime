@@ -31,7 +31,7 @@ alwaysApply: true
 - 随机结果、资源增减、计时和库存由后端计算，界面和控制器只负责表现，必须通过 `IGameBackend` 读写玩家数据，不得直接修改存档或自行计算结果。
 - 正式版后端为 PlayFab + Steam 权威后端。开发阶段经用户决定由客户端本地实现（`LocalGameBackend`），玩家数据可被本机修改，这是已接受的开发期风险；新增玩法必须写在后端程序集中，保持与未来云函数一致的接口和数据结构，不得为本地实现走捷径。
 - 所有改变资产的后端操作必须原子完成（失败时整体不生效），并具备幂等或防重复提交能力。
-- 开发专用能力（`dev:` 登录、GM 接口、调试面板）只在非生产环境存在，Release 构建和生产服务端中必须不可访问。
+- 开发专用能力（本地玩家登录、GM、调试面板）对外发售时必须不可访问。开发阶段按用户要求，正式打包的游戏也显示 GM，由 `GameBackendFactory.DeveloperToolsEnabled` 统一控制，发售前改为 `false`。
 - 密钥、令牌、Steam Web API Key 只从环境变量或安全配置读取，不进入代码仓库、日志或客户端包体。
 - 存档和数据结构变更通过 `schemaVersion` 迁移完成，必须兼容已有玩家数据，不能要求删档重建。
 
@@ -62,7 +62,7 @@ alwaysApply: true
 ## 七、构建与发布
 
 - 版本号采用 `主.次.修订`，每次对外构建都要更新版本号，并撰写变更说明。
-- Release 构建关闭本地玩家登录、GM 和调试输出，使用正式后端（PlayFab）。
+- 对外发售的构建关闭本地玩家登录、GM（`DeveloperToolsEnabled = false`）和调试输出，使用正式后端（PlayFab）。开发阶段的正式打包保留 GM。
 - 发布前在未安装开发环境的干净 Windows 10/11 机器上验证安装、首次启动、登录、核心循环和退出。
 - 客户端和云函数都要保留可定位问题的日志（不含敏感信息），客户端崩溃需要能收集日志。
 
@@ -74,5 +74,5 @@ alwaysApply: true
 - 替换 Pixel Adventure 2、Sweet Land GUI、主界面 AI 概念图切图（`Assets/Resources/Sprites/MainPage/`）等占位或待核验授权的素材，完成授权清单。
 - 核验已导入的中文字体荆南麦圆体（`KeinannMaruPOP.ttf`）的商用与再分发授权，并记入授权清单。
 - 实现概率公示页面。
-- 关闭 Release 构建中的 GM 工具。
+- 将 `GameBackendFactory.DeveloperToolsEnabled` 改为 `false`，关闭对外发售构建中的 GM 工具。
 - 用 PlayFab + Steam 权威后端替换 `LocalGameBackend`（迁移步骤见 `Docs/Systems/游戏后端与本地存档.md`，目标架构见 `Docs/Systems/目标后端架构.md`），并完成云端数据备份与监控。

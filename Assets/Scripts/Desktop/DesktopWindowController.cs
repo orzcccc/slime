@@ -45,6 +45,8 @@ namespace SlimeBlindBox.Desktop
             QualitySettings.vSyncCount = 0;
 #if SLIME_NATIVE_DESKTOP_WINDOW
             Screen.SetResolution(WindowWidth, WindowHeight, FullScreenMode.Windowed);
+            // 场景加载前就切换成无边框透明窗口并移到目标位置，避免启动时先闪出带标题栏的默认窗口。
+            ApplyNativeWindowStyle(FindUnityWindow());
 #endif
         }
 
@@ -159,12 +161,23 @@ namespace SlimeBlindBox.Desktop
                 return;
             }
 
-            SetWindowLongPtrCompat(windowHandle, GWL_STYLE, new IntPtr(WS_POPUP | WS_VISIBLE));
+            ApplyNativeWindowStyle(windowHandle);
+        }
+
+        private static bool nativeStyleApplied;
+
+        /// <summary>设置无边框样式、DWM 透明和启动位置。只执行一次，重复调用直接返回。</summary>
+        private static void ApplyNativeWindowStyle(IntPtr handle)
+        {
+            if (handle == IntPtr.Zero || nativeStyleApplied) return;
+            nativeStyleApplied = true;
+
+            SetWindowLongPtrCompat(handle, GWL_STYLE, new IntPtr(WS_POPUP | WS_VISIBLE));
             var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
-            DwmExtendFrameIntoClientArea(windowHandle, ref margins);
+            DwmExtendFrameIntoClientArea(handle, ref margins);
 
             var position = ResolveStartupPosition();
-            SetWindowPos(windowHandle, IntPtr.Zero, position.x, position.y, WindowWidth, WindowHeight,
+            SetWindowPos(handle, IntPtr.Zero, position.x, position.y, WindowWidth, WindowHeight,
                 SWP_FRAMECHANGED | SWP_NOZORDER | SWP_SHOWWINDOW);
         }
 
@@ -219,7 +232,7 @@ namespace SlimeBlindBox.Desktop
             SetWindowLongPtrCompat(windowHandle, GWL_EXSTYLE, new IntPtr(exStyle));
         }
 
-        private Vector2Int ResolveStartupPosition()
+        private static Vector2Int ResolveStartupPosition()
         {
             if (PlayerPrefs.GetInt(PositionSavedKey, 0) == 1)
             {

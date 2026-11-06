@@ -37,9 +37,14 @@ namespace SlimeBlindBox.EditorTools
             changed |= Set(PlayerSettings.forceSingleInstance, true, v => PlayerSettings.forceSingleInstance = v);
             // DXGI 翻转模型交换链不支持 DWM 逐像素透明，必须关闭，否则透明区域会显示为黑色。
             changed |= Set(PlayerSettings.useFlipModelSwapchain, false, v => PlayerSettings.useFlipModelSwapchain = v);
+            // 不显示 Unity 启动画面（Made with Unity）。Unity Personal 授权下引擎会强制显示，需要 Plus/Pro 授权才会真正生效。
+            changed |= Set(PlayerSettings.SplashScreen.show, false, v => PlayerSettings.SplashScreen.show = v);
+            changed |= Set(PlayerSettings.SplashScreen.showUnityLogo, false, v => PlayerSettings.SplashScreen.showUnityLogo = v);
+            // 启动瞬间（窗口切换为透明前）的背景色与岛屿 UI 的深色调一致，降低闪烁感。
+            changed |= Set(PlayerSettings.SplashScreen.backgroundColor, Color.black, v => PlayerSettings.SplashScreen.backgroundColor = v);
 
             if (changed) AssetDatabase.SaveAssets();
-            if (log || changed) Debug.Log(changed ? "已应用桌面岛屿窗口 Player 设置（800×800 无边框透明窗口）。" : "桌面岛屿窗口 Player 设置已是最新。");
+            if (log || changed) Debug.Log(changed ? "已应用桌面岛屿窗口 Player 设置（800×800 无边框透明窗口，关闭启动画面）。" : "桌面岛屿窗口 Player 设置已是最新。");
         }
 
         private static bool Set<T>(T current, T target, System.Action<T> assign)

@@ -12,6 +12,12 @@ namespace SlimeBlindBox.App
     /// </summary>
     public static class GameBackendFactory
     {
+        /// <summary>
+        /// 是否提供开发者工具（GM）。按用户要求，开发阶段正式打包的游戏也显示 GM；
+        /// 对外发售前必须改为 false（已列入上线阻塞项）。
+        /// </summary>
+        public const bool DeveloperToolsEnabled = true;
+
         private const string LocalPlayerId = "local-player";
         private const string SaveFolder = "save";
         private const string SaveFileName = "player.json";
@@ -23,7 +29,7 @@ namespace SlimeBlindBox.App
                 new JsonFilePlayerDataStore(savePath),
                 new SystemClock(),
                 new CryptoRandomSource(),
-                Debug.isDebugBuild,
+                DeveloperToolsEnabled,
                 LocalPlayerId,
                 MainUiText.LocalPlayerName,
                 Debug.LogException);
