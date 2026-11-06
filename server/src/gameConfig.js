@@ -1,5 +1,6 @@
 module.exports = Object.freeze({
   boxGenerationIntervalMs: 3 * 60 * 60 * 1000,
+  minBoxGenerationIntervalMs: 30 * 60 * 1000,
   defaultBoxCapacity: 8,
   initialBoxCount: 1,
   levelExperienceBase: 20,

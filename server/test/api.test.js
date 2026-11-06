@@ -49,6 +49,7 @@ test('新账号获得一个初始盲盒并返回权威时间', async () => {
   assert.equal(response.status, 200);
   assert.equal(response.body.box_count, 1);
   assert.equal(response.body.box_capacity, 8);
+  assert.equal(response.body.box_interval_seconds, 3 * 60 * 60);
   assert.equal(response.body.residue, undefined);
   assert.ok(response.body.server_time);
   assert.ok(response.body.next_box_at);
@@ -145,6 +146,18 @@ test('公会捐献增加资金并可升级扩容科技', async () => {
   assert.equal(upgraded.status, 200);
   const state = await request(app).get('/api/game/state').set('Authorization', `Bearer ${token}`);
   assert.equal(state.body.box_capacity, 10);
+});
+
+test('魔力节点缩短产出间隔并同步返回给客户端', async () => {
+  const user = await db.get("SELECT id FROM users WHERE steam_id = 'dev_tester'");
+  await db.run('UPDATE guilds SET magic_level = 2 WHERE id = (SELECT guild_id FROM guild_members WHERE user_id = ?)', [user.id]);
+  await db.run("UPDATE users SET box_count = 0, last_box_at = '2026-01-01T00:00:00.000Z' WHERE id = ?", [user.id]);
+  const service = createGameService({ now: () => new Date('2026-01-01T00:30:00.000Z') });
+  const state = await service.getGameState(user.id);
+  assert.equal(state.box_interval_seconds, 2 * 60 * 60);
+  assert.equal(state.box_count, 0);
+  assert.equal(state.next_box_at, '2026-01-01T02:00:00.000Z');
+  await db.run('UPDATE guilds SET magic_level = 0 WHERE id = (SELECT guild_id FROM guild_members WHERE user_id = ?)', [user.id]);
 });
 
 test('公会 Boss 每天只能投喂一次', async () => {

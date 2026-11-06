@@ -22,13 +22,17 @@ function weightedPick(slimes, randomInt = (maximum) => crypto.randomInt(maximum)
 function createGameService({ database = db, now = () => new Date(), randomInt, config = gameConfig } = {}) {
   const random = randomInt || ((maximum) => crypto.randomInt(maximum));
 
+  function boxIntervalMs(user) {
+    return Math.max(config.minBoxGenerationIntervalMs,
+      config.boxGenerationIntervalMs - (user.magic_level || 0) * config.magicNodeIntervalReductionMs);
+  }
+
   function settleBoxes(user, currentTime) {
     if (user.box_count >= user.box_capacity) {
       return { boxCount: user.box_count, lastBoxAt: currentTime };
     }
     const lastBoxAt = new Date(user.last_box_at);
-    const interval = Math.max(30 * 60 * 1000,
-      config.boxGenerationIntervalMs - (user.magic_level || 0) * config.magicNodeIntervalReductionMs);
+    const interval = boxIntervalMs(user);
     const elapsedMs = Math.max(0, currentTime.getTime() - lastBoxAt.getTime());
     const generated = Math.floor(elapsedMs / interval);
     const accepted = Math.min(generated, user.box_capacity - user.box_count);
@@ -41,15 +45,16 @@ function createGameService({ database = db, now = () => new Date(), randomInt, c
   }
 
   function buildGameState(user, currentTime) {
+    const interval = boxIntervalMs(user);
     return {
       box_count: user.box_count,
       box_capacity: user.box_capacity,
+      box_interval_seconds: Math.round(interval / 1000),
       total_cp: user.total_cp,
       server_time: currentTime.toISOString(),
       next_box_at: user.box_count >= user.box_capacity
         ? null
-        : new Date(new Date(user.last_box_at).getTime()
-          + Math.max(30 * 60 * 1000, config.boxGenerationIntervalMs - (user.magic_level || 0) * config.magicNodeIntervalReductionMs)).toISOString(),
+        : new Date(new Date(user.last_box_at).getTime() + interval).toISOString(),
     };
   }
 
