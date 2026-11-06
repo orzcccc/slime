@@ -33,7 +33,7 @@ description: 《史莱姆盲盒》项目内工作流：用户发来 UI 预览图
    - `python S/unity_compile_check.py` 按 Unity 的程序集划分离线编译，必须 0 错误且没有新警告（需要 Unity 至少编译过一次项目）。
    - Unity 内的实际运行由用户完成，交付时写明未验证项。
 
-7. **文档与提交。** 更新 `Docs/Systems/` 下对应页面文档和切图资源文档。用 `python S/git_commit.py --message <msg.txt> <路径...>` 只提交本次涉及的路径；工作区里可能有别人未提交的改动。
+7. **文档与提交。** 更新 `Docs/Systems/` 下对应页面文档和切图资源文档。用 `python S/git_commit.py --message <msg.txt> <路径...>` 提交：它用 `git commit --only`，只提交列出的路径，别人已暂存的改动不会被带进来。不要直接 `git commit`，工作区和暂存区里常有别人的改动。
 
 ## 限制
 
