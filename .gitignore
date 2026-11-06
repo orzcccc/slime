@@ -43,4 +43,5 @@ Thumbs.db
 
 # Local tool temp
 .codex_tmp/
+__pycache__/
 
