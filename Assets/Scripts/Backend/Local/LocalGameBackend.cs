@@ -13,6 +13,8 @@ namespace SlimeBlindBox.Backend.Local
     public sealed class LocalGameBackend : IGameBackend
     {
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        /// <summary>图鉴“基础概率”统一按白色盲盒口径计算。</summary>
+        private const string WhiteBoxKey = "WHITE";
 
         private readonly IPlayerDataStore store;
         private readonly IClock clock;
@@ -96,11 +98,12 @@ namespace SlimeBlindBox.Backend.Local
                 if (claimed <= 0) throw new BackendException(BackendErrorCodes.NoPendingBoxes, BackendMessages.NoPendingBoxes);
 
                 // 品质在产出时已确定，领取只是把凝聚台上看到的盲盒原样放进仓库。
+                var claimedBoxes = data.pendingBoxRarities.ToArray();
                 foreach (var key in data.pendingBoxRarities) GetOrCreateBoxStack(data, key).quantity += 1;
                 data.pendingBoxRarities.Clear();
                 data.pendingBoxCount = 0;
                 data.lastBoxAtUnixMs = ToUnixMs(now);
-                return new ClaimBoxesResponse { claimed = claimed, game_state = BuildGameState(data, now) };
+                return new ClaimBoxesResponse { claimed = claimed, claimed_boxes = claimedBoxes, game_state = BuildGameState(data, now) };
             }, onSuccess, onError);
         }
 
@@ -118,9 +121,12 @@ namespace SlimeBlindBox.Backend.Local
                     throw new BackendException(BackendErrorCodes.BoxStockEmpty, string.Format(BackendMessages.BoxStockEmptyFormat, box.Name));
 
                 var slime = PickSlime(box.Key);
+                var totalCpBefore = CalculateTotalCp(data);
+                var isNew = FindSlimeRecord(data, slime.Id) == null;
                 stack.quantity -= 1;
                 if (data.totalBoxesOpened < int.MaxValue) data.totalBoxesOpened += 1;
                 GrantSlime(data, slime.Id, 1, now);
+                var owned = FindSlimeRecord(data, slime.Id);
                 var rarity = GameBalanceConfig.FindSlimeRarity(slime.RarityKey);
                 return new OpenBoxResponse
                 {
@@ -131,6 +137,11 @@ namespace SlimeBlindBox.Backend.Local
                     rarity_color = rarity.Color,
                     box_rarity_key = box.Key,
                     box_rarity = box.Name,
+                    is_new = isNew,
+                    quantity = owned.quantity,
+                    base_cp = slime.BaseCp,
+                    unit_effective_cp = GameBalanceConfig.UnitEffectiveCp(slime.BaseCp, owned.level),
+                    total_cp_before = totalCpBefore,
                     game_state = BuildGameState(data, now),
                 };
             }, onSuccess, onError);
@@ -190,9 +201,13 @@ namespace SlimeBlindBox.Backend.Local
                         base_cp = slime.BaseCp,
                         discovered = record != null ? 1 : 0,
                         first_obtained_at = record != null ? FormatTime(FromUnixMs(record.firstObtainedAtUnixMs)) : null,
+                        quantity = record != null ? Math.Max(0, record.quantity) : 0,
+                        base_probability = (float)GameBalanceConfig.SlimeProbability(slime.Id, WhiteBoxKey),
+                        description = slime.Description,
                     });
                 }
                 entries.Sort((left, right) => left.slime_id.CompareTo(right.slime_id));
+                for (var index = 0; index < entries.Count; index++) entries[index].number = index + 1;
                 return new DictionaryResponse
                 {
                     entries = entries.ToArray(),
@@ -480,16 +495,7 @@ namespace SlimeBlindBox.Backend.Local
         private SlimeDefinition PickSlime(string boxRarityKey)
         {
             var candidates = GameBalanceConfig.Slimes;
-            var weights = new int[candidates.Count];
-            long total = 0;
-            for (var index = 0; index < candidates.Count; index++)
-            {
-                var slime = candidates[index];
-                weights[index] = slime.DropWeight > 0
-                    ? GameBalanceConfig.AdjustedSlimeWeight(slime.DropWeight, slime.RarityKey, boxRarityKey)
-                    : 0;
-                total += weights[index];
-            }
+            var weights = GameBalanceConfig.SlimeWeightsForBox(boxRarityKey, out var total);
             if (total <= 0 || total > int.MaxValue)
                 throw new BackendException(BackendErrorCodes.ConfigInvalid, BackendMessages.ConfigInvalid);
 

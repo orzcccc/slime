@@ -47,6 +47,8 @@ namespace SlimeBlindBox.Backend
     public sealed class ClaimBoxesResponse
     {
         public int claimed;
+        /// <summary>本次领取的盲盒品质键，顺序与领取前凝聚台槽位一致。</summary>
+        public string[] claimed_boxes;
         public GameStateDto game_state;
     }
 
@@ -60,6 +62,15 @@ namespace SlimeBlindBox.Backend
         public string rarity_color;
         public string box_rarity_key;
         public string box_rarity;
+        /// <summary>是否首次获得（本次开箱点亮图鉴）。</summary>
+        public bool is_new;
+        /// <summary>开箱后该史莱姆的持有数量。</summary>
+        public int quantity;
+        public int base_cp;
+        /// <summary>该史莱姆单只有效 CP（含等级加成）。</summary>
+        public int unit_effective_cp;
+        /// <summary>开箱前的总 CP，与 game_state.total_cp 一起用于展示总 CP 变化。</summary>
+        public int total_cp_before;
         public GameStateDto game_state;
     }
 
@@ -104,6 +115,8 @@ namespace SlimeBlindBox.Backend
     public sealed class DictionaryItemDto
     {
         public int slime_id;
+        /// <summary>图鉴编号，从 1 开始。</summary>
+        public int number;
         public string name;
         public string rarity;
         public string rarity_key;
@@ -111,6 +124,11 @@ namespace SlimeBlindBox.Backend
         public int base_cp;
         public int discovered;
         public string first_obtained_at;
+        /// <summary>当前持有数量；已发现但数量为 0 时为 0。</summary>
+        public int quantity;
+        /// <summary>白色盲盒开出该史莱姆的基础概率（0–1）。</summary>
+        public float base_probability;
+        public string description;
     }
 
     /// <summary>后端失败结果。code 供程序判断，message 可直接展示给玩家，不含任何内部细节。</summary>

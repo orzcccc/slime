@@ -32,6 +32,8 @@ namespace SlimeBlindBox.UI
         private readonly Dictionary<string, Sprite> boxQualitySprites = new Dictionary<string, Sprite>();
         private const string BoxSpritePathPrefix = "Sprites/MainPage/Props/Box_";
         private InventoryPopupView inventoryView;
+        private BoxOpeningController boxOpeningView;
+        private DictionaryView dictionaryView;
         private GameSettingsView settingsView;
         private BoxOpenAnimator boxAnimator;
         private bool isOpeningBox;
@@ -98,9 +100,9 @@ namespace SlimeBlindBox.UI
             slotPrefab = Resources.Load<BoxSlotItemView>("UI/BoxSlotItem");
             pages = new[] { uiRefs.boxPage, uiRefs.dictionaryPage };
 
-            uiRefs.claimButton.onClick.AddListener(controller.ClaimBoxes);
-            uiRefs.boxTab.onClick.AddListener(() => TogglePage(uiRefs.boxPage));
-            uiRefs.dictionaryTab.onClick.AddListener(() => TogglePage(uiRefs.dictionaryPage));
+            uiRefs.claimButton.onClick.AddListener(OnClaimClicked);
+            uiRefs.boxTab.onClick.AddListener(OpenBoxWarehouse);
+            uiRefs.dictionaryTab.onClick.AddListener(OpenDictionary);
             uiRefs.slimeModeButton.onClick.AddListener(() => SetDisplayMode(DisplayModeSlime));
             uiRefs.boxModeButton.onClick.AddListener(() => SetDisplayMode(DisplayModeBox));
             uiRefs.selectedBoxOpenButton.onClick.AddListener(OpenSelectedBox);
@@ -110,6 +112,8 @@ namespace SlimeBlindBox.UI
             boxAnimator.Initialize(uiRefs.selectedBoxImage);
             InitializeInventory(instance.transform);
             InitializeSettings(instance.transform);
+            InitializeBoxOpening(instance.transform);
+            InitializeDictionary(instance.transform);
             SetDisplayMode(PlayerPrefs.GetInt(DisplayModeKey, DisplayModeSlime), false);
             ShowHome();
             return true;
@@ -157,15 +161,89 @@ namespace SlimeBlindBox.UI
             switch (exit)
             {
                 case InventoryExit.Dictionary:
-                    ShowPage(uiRefs.dictionaryPage);
+                    OpenDictionary();
                     break;
                 case InventoryExit.BoxPage:
-                    ShowPage(uiRefs.boxPage);
+                    OpenBoxWarehouse();
                     break;
                 default:
                     ShowHome();
                     break;
             }
+        }
+
+        private void OnClaimClicked()
+        {
+            if (controller.IsBusy) return;
+            controller.ClaimBoxes(response => boxOpeningView?.ShowClaim(response), error =>
+                uiRefs.messageText.text = error?.message ?? MainUiText.Processing);
+        }
+
+        private void OpenBoxWarehouse()
+        {
+            if (boxOpeningView == null) return;
+            SetHudVisible(false);
+            boxOpeningView.ShowWarehouse();
+        }
+
+        private void OpenDictionary()
+        {
+            if (dictionaryView == null) return;
+            SetHudVisible(false);
+            dictionaryView.Show();
+        }
+
+        private void InitializeBoxOpening(Transform uiRoot)
+        {
+            var prefab = Resources.Load<GameObject>("UI/BoxOpeningPopup");
+            if (prefab == null)
+            {
+                Debug.LogError("缺少 Resources/UI/BoxOpeningPopup.prefab。");
+                return;
+            }
+            var instance = Instantiate(prefab, uiRoot, false);
+            boxOpeningView = instance.GetComponent<BoxOpeningController>();
+            if (boxOpeningView == null)
+            {
+                Debug.LogError("BoxOpeningPopup.prefab 缺少 BoxOpeningController。");
+                Destroy(instance);
+                return;
+            }
+            var row = instance.GetComponentInChildren<BoxWarehouseRow>(true);
+            var tile = instance.GetComponentInChildren<ClaimResultTile>(true);
+            var rows = instance.transform.Find("BoxOpeningPopup/warehouse/panel/rows") as RectTransform;
+            var tiles = instance.transform.Find("BoxOpeningPopup/claimResult/panel/tiles") as RectTransform;
+            boxOpeningView.Initialize(controller, runtimeFont, row, rows, tile, tiles, () =>
+            {
+                SetHudVisible(true);
+                ShowHome();
+            });
+            instance.SetActive(false);
+        }
+
+        private void InitializeDictionary(Transform uiRoot)
+        {
+            var prefab = Resources.Load<GameObject>("UI/DictionaryPopup");
+            if (prefab == null)
+            {
+                Debug.LogError("缺少 Resources/UI/DictionaryPopup.prefab。");
+                return;
+            }
+            var instance = Instantiate(prefab, uiRoot, false);
+            dictionaryView = instance.GetComponent<DictionaryView>();
+            if (dictionaryView == null)
+            {
+                Debug.LogError("DictionaryPopup.prefab 缺少 DictionaryView。");
+                Destroy(instance);
+                return;
+            }
+            dictionaryView.Initialize(controller, runtimeFont, exit =>
+            {
+                SetHudVisible(true);
+                if (exit == DictionaryExit.Bag) OpenInventory();
+                else ShowHome();
+            });
+            instance.SetActive(false);
         }
 
         /// <summary>背包面板占据窗口中央，打开期间隐藏岛屿、顶栏、底栏和消息条。</summary>

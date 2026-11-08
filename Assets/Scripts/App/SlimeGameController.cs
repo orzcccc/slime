@@ -62,9 +62,10 @@ namespace SlimeBlindBox.App
             RefreshGameState();
         }
 
-        public void OpenBox(string boxRarityKey)
+        /// <summary>打开一个盲盒。成功回调在状态与收藏刷新完成后触发；失败不扣除仓库盲盒。</summary>
+        public bool OpenBox(string boxRarityKey, Action<OpenBoxResponse> onSuccess = null, Action<BackendError> onError = null)
         {
-            if (IsBusy || GameState == null) return;
+            if (IsBusy || GameState == null) return false;
             Begin();
             backend.OpenBox(boxRarityKey, response =>
             {
@@ -72,19 +73,24 @@ namespace SlimeBlindBox.App
                 LastMessage = string.Format(MainUiText.ObtainedFormat, response.name, response.rarity);
                 End();
                 RefreshCollections();
+                onSuccess?.Invoke(response);
             }, Fail);
+            return true;
         }
 
-        public void ClaimBoxes()
+        /// <summary>领取凝聚台上的全部盲盒。claimed_boxes 与领取前槽位顺序一致。</summary>
+        public bool ClaimBoxes(Action<ClaimBoxesResponse> onSuccess = null, Action<BackendError> onError = null)
         {
-            if (IsBusy || GameState == null || GameState.box_count <= 0) return;
+            if (IsBusy || GameState == null || GameState.box_count <= 0) return false;
             Begin();
             backend.ClaimBoxes(response =>
             {
                 SetGameState(response.game_state);
                 LastMessage = string.Format(MainUiText.ClaimedFormat, response.claimed);
                 End();
+                onSuccess?.Invoke(response);
             }, Fail);
+            return true;
         }
 
         public void DebugModifyBoxes(DebugBoxAction action, int amount)

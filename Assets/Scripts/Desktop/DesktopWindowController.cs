@@ -15,15 +15,15 @@ using TMPro;
 namespace SlimeBlindBox.Desktop
 {
     /// <summary>
-    /// 桌面岛屿窗口：800×800 逻辑尺寸（可按 100/125/150/200% 整体缩放）、无边框、透明背景、
+    /// 桌面岛屿窗口：480×480 实际尺寸（可按 100/125/150/200% 整体缩放）、无边框、透明背景、
     /// 按住岛屿拖动（可锁定）、透明区域点击穿透、始终置顶、显示/隐藏岛屿。
     /// 原生窗口能力只在 Windows Player 中生效；Editor 中按普通 Game 视图运行。
     /// </summary>
     public sealed class DesktopWindowController : MonoBehaviour
     {
-        /// <summary>逻辑参考尺寸，所有界面按 800×800 布局。</summary>
-        public const int WindowWidth = 800;
-        public const int WindowHeight = 800;
+        /// <summary>实际窗口尺寸。界面按 480×480 Canvas 等比缩放，预制仍使用 800×800 设计坐标。</summary>
+        public const int WindowWidth = 480;
+        public const int WindowHeight = 480;
 
         private const string PositionXKey = "desktop.window.x";
         private const string PositionYKey = "desktop.window.y";
@@ -222,7 +222,10 @@ namespace SlimeBlindBox.Desktop
                 var scaler = canvas.GetComponent<CanvasScaler>();
                 if (scaler != null)
                 {
-                    if (scaler.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize) scaler.scaleFactor = factor;
+                    scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                    scaler.referenceResolution = new Vector2(480, 480);
+                    scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                    scaler.matchWidthOrHeight = .5f;
                 }
                 else if (!Mathf.Approximately(canvas.scaleFactor, factor))
                 {

@@ -45,13 +45,14 @@ namespace SlimeBlindBox.Backend
 
     public sealed class SlimeDefinition
     {
-        public SlimeDefinition(int id, string name, string rarityKey, int baseCp, int dropWeight)
+        public SlimeDefinition(int id, string name, string rarityKey, int baseCp, int dropWeight, string description)
         {
             Id = id;
             Name = name;
             RarityKey = rarityKey;
             BaseCp = baseCp;
             DropWeight = dropWeight;
+            Description = description;
         }
 
         public int Id { get; }
@@ -60,6 +61,8 @@ namespace SlimeBlindBox.Backend
         public int BaseCp { get; }
         /// <summary>具体条目的掉落权重。同品质多条目时需细分该品质的总权重。</summary>
         public int DropWeight { get; }
+        /// <summary>图鉴描述文案，最多两行。接入 PlayFab 后随 Catalog 下发并本地化。</summary>
+        public string Description { get; }
     }
 
     /// <summary>
@@ -110,18 +113,18 @@ namespace SlimeBlindBox.Backend
 
         public static readonly IReadOnlyList<SlimeDefinition> Slimes = new[]
         {
-            new SlimeDefinition(201, "干瘪史莱姆", "POOR", 5, 350000),
-            new SlimeDefinition(202, "基础史莱姆", "COMMON", 10, 300000),
-            new SlimeDefinition(203, "嫩芽史莱姆", "UNCOMMON", 20, 180000),
-            new SlimeDefinition(204, "潮汐史莱姆", "RARE", 40, 100000),
-            new SlimeDefinition(205, "紫晶史莱姆", "EPIC", 90, 50000),
-            new SlimeDefinition(206, "烈阳史莱姆", "MYTHIC", 180, 15000),
-            new SlimeDefinition(207, "赤龙史莱姆", "LEGENDARY", 400, 4000),
-            new SlimeDefinition(208, "星辉神器史莱姆", "ARTIFACT", 900, 800),
-            new SlimeDefinition(209, "深渊魔王史莱姆", "DEMON_KING", 1800, 150),
-            new SlimeDefinition(210, "炎狱战神史莱姆", "WAR_GOD", 3500, 40),
-            new SlimeDefinition(211, "万象至尊史莱姆", "SUPREME", 7000, 9),
-            new SlimeDefinition(212, "混沌魔神史莱姆", "DEMON_GOD", 15000, 1),
+            new SlimeDefinition(201, "干瘪史莱姆", "POOR", 5, 350000, "水分不太够的史莱姆，晒太阳会更瘪。"),
+            new SlimeDefinition(202, "基础史莱姆", "COMMON", 10, 300000, "最常见的史莱姆，软软的，弹弹的。"),
+            new SlimeDefinition(203, "嫩芽史莱姆", "UNCOMMON", 20, 180000, "头顶冒出一片小嫩芽，喜欢待在草地上。"),
+            new SlimeDefinition(204, "潮汐史莱姆", "RARE", 40, 100000, "身体随着潮水起伏，摸起来凉凉的。"),
+            new SlimeDefinition(205, "紫晶史莱姆", "EPIC", 90, 50000, "体内藏着紫色晶簇，夜里会微微发光。"),
+            new SlimeDefinition(206, "烈阳史莱姆", "MYTHIC", 180, 15000, "吸收了正午的阳光，靠近会觉得暖暖的。"),
+            new SlimeDefinition(207, "赤龙史莱姆", "LEGENDARY", 400, 4000, "据说有一丝龙族血脉，打喷嚏会冒小火星。"),
+            new SlimeDefinition(208, "星辉神器史莱姆", "ARTIFACT", 900, 800, "由星光凝成的史莱姆，周围总有细碎的闪光。"),
+            new SlimeDefinition(209, "深渊魔王史莱姆", "DEMON_KING", 1800, 150, "来自深渊的小魔王，其实很怕黑。"),
+            new SlimeDefinition(210, "炎狱战神史莱姆", "WAR_GOD", 3500, 40, "戴着战盔的勇士，每天坚持晨练弹跳。"),
+            new SlimeDefinition(211, "万象至尊史莱姆", "SUPREME", 7000, 9, "晶莹剔透的至尊，王冠上镶着整片星空。"),
+            new SlimeDefinition(212, "混沌魔神史莱姆", "DEMON_GOD", 15000, 1, "体内流转着宇宙的颜色，传说只在梦里见过。"),
         };
 
         public static SlimeRarityDefinition FindSlimeRarity(string key)
@@ -154,6 +157,42 @@ namespace SlimeBlindBox.Backend
         }
 
         public static int ExperienceForLevel(int level) => LevelExperienceBase + (level - 1) * LevelExperienceGrowth;
+
+        /// <summary>指定盲盒品质下每个史莱姆的调整后掉落权重，顺序与 <see cref="Slimes"/> 一致。开箱抽取与概率公示共用。</summary>
+        public static int[] SlimeWeightsForBox(string boxRarityKey, out long total)
+        {
+            var weights = new int[Slimes.Count];
+            total = 0;
+            for (var index = 0; index < Slimes.Count; index++)
+            {
+                var slime = Slimes[index];
+                weights[index] = slime.DropWeight > 0 ? AdjustedSlimeWeight(slime.DropWeight, slime.RarityKey, boxRarityKey) : 0;
+                total += weights[index];
+            }
+            return weights;
+        }
+
+        /// <summary>用指定品质的盲盒开出某只史莱姆的概率（0–1）。</summary>
+        public static double SlimeProbability(int slimeId, string boxRarityKey)
+        {
+            var weights = SlimeWeightsForBox(boxRarityKey, out var total);
+            if (total <= 0) return 0;
+            for (var index = 0; index < Slimes.Count; index++)
+                if (Slimes[index].Id == slimeId) return weights[index] / (double)total;
+            return 0;
+        }
+
+        /// <summary>用指定品质的盲盒开出各史莱姆品质的概率（0–1），顺序与 <see cref="SlimeRarities"/> 一致，用于概率公示。</summary>
+        public static double[] RarityProbabilities(string boxRarityKey)
+        {
+            var weights = SlimeWeightsForBox(boxRarityKey, out var total);
+            var result = new double[SlimeRarities.Count];
+            if (total <= 0) return result;
+            for (var index = 0; index < Slimes.Count; index++)
+                for (var rank = 0; rank < SlimeRarities.Count; rank++)
+                    if (SlimeRarities[rank].Key == Slimes[index].RarityKey) result[rank] += weights[index] / (double)total;
+            return result;
+        }
 
         /// <summary>等级对 CP 的加成倍率：1 + log2(等级) × 0.25。</summary>
         public static double LevelCpMultiplier(int level) => 1 + Math.Log(Math.Max(1, level), 2) * LevelCpRate;

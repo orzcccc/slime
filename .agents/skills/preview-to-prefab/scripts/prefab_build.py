@@ -24,6 +24,9 @@ class Builder:
     def __init__(self, spec):
         self.spec = spec
         self.P = Prefab(spec['prefab'], seed=int(hashlib.md5(spec['prefab'].encode()).hexdigest()[:8], 16), create=True)
+        # A newly created prefab starts empty: drop the placeholder header id from the object order.
+        self.P.order = [i for i in self.P.order if i in self.P.docs]
+        self.P.docs = {i: d for i, d in self.P.docs.items() if i in self.P.order}
         self.sprites = {}
         for f in ([spec['sprites']] if isinstance(spec.get('sprites'), str) else spec.get('sprites', [])):
             self.sprites.update(json.load(open(f, encoding='utf-8')))

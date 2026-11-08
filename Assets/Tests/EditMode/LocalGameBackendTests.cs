@@ -320,6 +320,58 @@ namespace SlimeBlindBox.Backend.Tests
         }
 
         [Test]
+        public void ClaimReturnsTheRaritiesThatWereShown()
+        {
+            Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Clear, 0, ok, fail));
+            random.Enqueue(9000, 0); // 紫、白
+            var shown = Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Add, 2, ok, fail)).pending_boxes;
+            var claim = Ok<ClaimBoxesResponse>(backend.ClaimBoxes);
+            CollectionAssert.AreEqual(shown, claim.claimed_boxes);
+            Assert.AreEqual(2, claim.claimed);
+        }
+
+        [Test]
+        public void OpenBoxReportsNewDiscoveryAndCpChange()
+        {
+            Ok<ClaimBoxesResponse>(backend.ClaimBoxes); // 初始白色盲盒
+            random.Enqueue(0);
+            var first = Ok<OpenBoxResponse>((ok, fail) => backend.OpenBox("WHITE", ok, fail));
+            Assert.IsTrue(first.is_new);
+            Assert.AreEqual(1, first.quantity);
+            Assert.AreEqual(0, first.total_cp_before);
+            Assert.AreEqual(first.unit_effective_cp, first.game_state.total_cp);
+
+            Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Add, 1, ok, fail));
+            Ok<ClaimBoxesResponse>(backend.ClaimBoxes);
+            random.Enqueue(0);
+            var second = Ok<OpenBoxResponse>((ok, fail) => backend.OpenBox("WHITE", ok, fail));
+            Assert.IsFalse(second.is_new);
+            Assert.AreEqual(2, second.quantity);
+            Assert.AreEqual(first.game_state.total_cp, second.total_cp_before);
+        }
+
+        [Test]
+        public void DictionaryEntriesCarryNumberQuantityProbabilityAndDescription()
+        {
+            Ok<ClaimBoxesResponse>(backend.ClaimBoxes);
+            random.Enqueue(0);
+            Ok<OpenBoxResponse>((ok, fail) => backend.OpenBox("WHITE", ok, fail));
+            var dictionary = Ok<DictionaryResponse>(backend.GetDictionary);
+            double sum = 0;
+            for (var index = 0; index < dictionary.entries.Length; index++)
+            {
+                var entry = dictionary.entries[index];
+                Assert.AreEqual(index + 1, entry.number);
+                Assert.IsFalse(string.IsNullOrEmpty(entry.description));
+                sum += entry.base_probability;
+            }
+            Assert.AreEqual(1.0, sum, 1e-4);
+            Assert.AreEqual(1, dictionary.entries[0].quantity);
+            Assert.AreEqual(0, dictionary.entries[1].quantity);
+            Assert.AreEqual(0.35, dictionary.entries[0].base_probability, 1e-4);
+        }
+
+        [Test]
         public void OpenBoxIncrementsTotalBoxesOpened()
         {
             Assert.AreEqual(0, State().total_boxes_opened);
