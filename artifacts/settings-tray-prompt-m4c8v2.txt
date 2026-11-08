@@ -1,0 +1,6 @@
+Use case: logo-brand
+Asset type: desktop system tray / app icon for a cute slime game, must stay readable at 16x16 pixels
+Input images: Image 1 = STYLE reference (use its slime look: cyan-blue glossy jelly slime, deep blue-gray outline).
+Primary request: a single cute cyan-blue jelly slime, front view, dome shape filling most of the square, very bold thick deep blue-gray outline, two big simple dark oval eyes, one big white highlight, flat simple shading, no tiny details.
+Background: perfectly flat solid #FF00FF magenta background for removal, uniform; do not use magenta in the subject.
+Constraints: no text, no watermark, no shadow, centered with small even margin.

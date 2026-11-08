@@ -14,8 +14,10 @@ namespace SlimeBlindBox.UI
             var root = new GameObject("SlimeBlindBoxApp");
             Object.DontDestroyOnLoad(root);
             root.AddComponent<SlimeGameController>();
+            root.AddComponent<GameAudio>();
             root.AddComponent<CoreLoopView>();
             root.AddComponent<DesktopWindowController>();
+            root.AddComponent<DesktopTrayController>();
         }
     }
 }

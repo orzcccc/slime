@@ -71,8 +71,10 @@ alwaysApply: true
 以下项目在正式发售前必须解决，完成后从本清单移除：
 
 - 接入真实 Steam 鉴权（PlayFab `LoginWithSteam`），移除本地玩家档案登录。
-- 替换 Pixel Adventure 2、Sweet Land GUI、主界面与背包 AI 概念图切图（`Assets/Resources/Sprites/MainPage/`、`Assets/Resources/Sprites/Bag/`）等占位或待核验授权的素材，完成授权清单。
+- 替换 Pixel Adventure 2、Sweet Land GUI、主界面、背包与设置 AI 概念图切图（`Assets/Resources/Sprites/MainPage/`、`Assets/Resources/Sprites/Bag/`、`Assets/Resources/Sprites/Settings/`）及托盘图标（`Assets/StreamingAssets/Tray/`）等占位或待核验授权的素材，完成授权清单。
 - 核验已导入的中文字体荆南麦圆体（`KeinannMaruPOP.ttf`）的商用与再分发授权，并记入授权清单。
 - 实现概率公示页面。
+- 填写用户协议与隐私政策的正式地址（`ExternalLinks`，当前为空，设置页提示“暂未开放”）。
+- 制作正式背景音乐与音效，替换设置试听使用的程序生成占位提示音（见 `Docs/Systems/游戏设置系统.md`）。
 - 将 `GameBackendFactory.DeveloperToolsEnabled` 改为 `false`，关闭对外发售构建中的 GM 工具。
 - 用 PlayFab + Steam 权威后端替换 `LocalGameBackend`（迁移步骤见 `Docs/Systems/游戏后端与本地存档.md`，目标架构见 `Docs/Systems/目标后端架构.md`），并完成云端数据备份与监控。

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SlimeBlindBox.App;
 using SlimeBlindBox.Backend;
+using SlimeBlindBox.Desktop;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -31,7 +32,9 @@ namespace SlimeBlindBox.UI
         private readonly Dictionary<string, Sprite> boxQualitySprites = new Dictionary<string, Sprite>();
         private const string BoxSpritePathPrefix = "Sprites/MainPage/Props/Box_";
         private InventoryPopupView inventoryView;
+        private GameSettingsView settingsView;
         private BoxOpenAnimator boxAnimator;
+        private bool isOpeningBox;
         private DateTime nextBoxAt;
         private int boxIntervalSeconds = DefaultBoxIntervalSeconds;
         private int lastShownSecond = -1;
@@ -185,7 +188,7 @@ namespace SlimeBlindBox.UI
             }
 
             var instance = Instantiate(prefab, uiRoot, false);
-            var settingsView = instance.GetComponent<GameSettingsView>();
+            settingsView = instance.GetComponent<GameSettingsView>();
             if (settingsView == null)
             {
                 Debug.LogError("GameSettings.prefab 缺少 GameSettingsView 组件。");
@@ -194,10 +197,21 @@ namespace SlimeBlindBox.UI
                 return;
             }
 
-            settingsView.Initialize(runtimeFont);
             instance.SetActive(false);
-            uiRefs.settingsButton.onClick.AddListener(settingsView.Show);
+            settingsView.Initialize(controller, runtimeFont, () => isOpeningBox, OnSettingsOpened, OnSettingsClosed,
+                GetComponent<DesktopTrayController>());
+            uiRefs.settingsButton.onClick.AddListener(() => settingsView.Show());
         }
+
+        /// <summary>设置面板与背包同尺寸，打开期间隐藏岛屿和顶栏、底栏；托盘打开设置时先收起背包。</summary>
+        private void OnSettingsOpened()
+        {
+            if (inventoryView != null && inventoryView.gameObject.activeSelf) inventoryView.gameObject.SetActive(false);
+            ShowHome();
+            SetHudVisible(false);
+        }
+
+        private void OnSettingsClosed() => SetHudVisible(true);
 
         private void SetDisplayMode(int mode, bool save = true)
         {
@@ -383,10 +397,18 @@ namespace SlimeBlindBox.UI
 
         private System.Collections.IEnumerator PlayBoxAndOpen()
         {
+            isOpeningBox = true;
             uiRefs.selectedBoxOpenButton.interactable = false;
             uiRefs.boxOpenHint.text = MainUiText.BoxOpening;
-            yield return boxAnimator.Play(selectedBoxColor);
-            controller.OpenBox(selectedBoxKey);
+            try
+            {
+                yield return boxAnimator.Play(selectedBoxColor, LocalSettings.FastOpenAnimation);
+                controller.OpenBox(selectedBoxKey);
+            }
+            finally
+            {
+                isOpeningBox = false;
+            }
         }
 
         private void RenderDictionary()

@@ -158,4 +158,4 @@ xxxScroll        ScrollRect（movementType = Clamped）
 - [x] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。
 - [ ] `SafeAreaFitter` 改为按第六节修改 offset。
 - [ ] 节点名改为英文驼峰（例如 `开启盲盒` → `openBoxButton`），同步更新引用。（首页、顶栏、功能坞、背包已完成；背包已改为独立 `InventoryPopup.prefab`；仓库、图鉴页待改）
-- [ ] 设置弹窗补齐 `mask` / `panel` 结构。
+- [x] 设置弹窗改为与背包同尺寸的 `panel` 结构（`GameSettings.prefab`，2026-11-08），见 [游戏设置系统](游戏设置系统.md)。
