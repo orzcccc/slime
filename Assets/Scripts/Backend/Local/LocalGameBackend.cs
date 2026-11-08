@@ -64,6 +64,7 @@ namespace SlimeBlindBox.Backend.Local
                 var working = loaded ?? CreateNewPlayer(now);
                 if (working.schemaVersion > PlayerSaveData.CurrentSchemaVersion)
                     throw new BackendException(BackendErrorCodes.SaveVersionTooNew, BackendMessages.SaveVersionTooNew);
+                Migrate(working);
                 Normalize(working);
                 working.lastLoginAtUnixMs = ToUnixMs(now);
                 Persist(working);
@@ -118,6 +119,7 @@ namespace SlimeBlindBox.Backend.Local
 
                 var slime = PickSlime(box.Key);
                 stack.quantity -= 1;
+                if (data.totalBoxesOpened < int.MaxValue) data.totalBoxesOpened += 1;
                 GrantSlime(data, slime.Id, 1, now);
                 var rarity = GameBalanceConfig.FindSlimeRarity(slime.RarityKey);
                 return new OpenBoxResponse
@@ -318,11 +320,27 @@ namespace SlimeBlindBox.Backend.Local
             return data;
         }
 
+        /// <summary>按存档版本逐级迁移，保证已有玩家数据不需要删档。</summary>
+        private static void Migrate(PlayerSaveData data)
+        {
+            if (data.schemaVersion < 2)
+            {
+                // v1 没有记录开箱次数。目前每次开箱恰好获得 1 只史莱姆且史莱姆不会被消耗，
+                // 因此用持有史莱姆总数作为迁移初值。
+                long opened = 0;
+                if (data.slimes != null)
+                    foreach (var record in data.slimes)
+                        if (record != null && record.quantity > 0) opened += record.quantity;
+                data.totalBoxesOpened = (int)Math.Min(int.MaxValue, opened);
+            }
+        }
+
         /// <summary>修复存档中的异常值（负数、空列表、重复条目），保证后续逻辑不会因脏数据出错。</summary>
         private void Normalize(PlayerSaveData data)
         {
             if (string.IsNullOrEmpty(data.playerId)) data.playerId = playerId;
             if (string.IsNullOrEmpty(data.nickname)) data.nickname = defaultNickname;
+            data.totalBoxesOpened = Math.Max(0, data.totalBoxesOpened);
             if (data.boxCapacity <= 0) data.boxCapacity = GameBalanceConfig.DefaultBoxCapacity;
             data.pendingBoxCount = Math.Max(0, Math.Min(data.boxCapacity, data.pendingBoxCount));
             // 待领取品质与数量对齐：保留有效记录，旧存档缺少的品质按领取概率补齐，多余记录丢弃。
@@ -424,6 +442,7 @@ namespace SlimeBlindBox.Backend.Local
                 next_box_at = data.pendingBoxCount >= data.boxCapacity
                     ? null
                     : FormatTime(FromUnixMs(data.lastBoxAtUnixMs) + interval),
+                total_boxes_opened = data.totalBoxesOpened,
                 box_inventory = boxes,
             };
         }

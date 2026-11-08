@@ -29,6 +29,8 @@ namespace SlimeBlindBox.Backend
         public int total_cp;
         public string server_time;
         public string next_box_at;
+        /// <summary>累计开箱次数，账号页与将来的 Steam 状态文案同源。</summary>
+        public int total_boxes_opened;
         public BoxInventoryItemDto[] box_inventory;
     }
 

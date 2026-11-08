@@ -318,6 +318,36 @@ namespace SlimeBlindBox.Backend.Tests
             CreateBackend(true).GetGameState(_ => Assert.Fail(), e => error = e);
             Assert.AreEqual(BackendErrorCodes.NotLoggedIn, error.code);
         }
+
+        [Test]
+        public void OpenBoxIncrementsTotalBoxesOpened()
+        {
+            Assert.AreEqual(0, State().total_boxes_opened);
+            random.Enqueue(0);
+            Ok<ClaimBoxesResponse>(backend.ClaimBoxes);
+            random.Enqueue(0);
+            var opened = Ok<OpenBoxResponse>((ok, fail) => backend.OpenBox("WHITE", ok, fail));
+            Assert.AreEqual(1, opened.game_state.total_boxes_opened);
+
+            Err<OpenBoxResponse>((ok, fail) => backend.OpenBox("WHITE", ok, fail));
+            Assert.AreEqual(1, State().total_boxes_opened);
+        }
+
+        [Test]
+        public void LegacySaveMigratesOpenedCountFromOwnedSlimes()
+        {
+            var legacy = store.Inner.Load();
+            legacy.schemaVersion = 1;
+            legacy.totalBoxesOpened = 0;
+            legacy.slimes.Add(new SlimeSave { slimeId = 201, quantity = 3, level = 1 });
+            legacy.slimes.Add(new SlimeSave { slimeId = 202, quantity = 2, level = 1 });
+            store.Inner.Save(legacy);
+
+            var reloaded = CreateBackend(true);
+            Login(reloaded);
+            Assert.AreEqual(5, Ok<GameStateDto>(reloaded.GetGameState).total_boxes_opened);
+            Assert.AreEqual(PlayerSaveData.CurrentSchemaVersion, store.Inner.Load().schemaVersion);
+        }
     }
 
     public sealed class GameBalanceConfigTests

@@ -11,7 +11,8 @@ namespace SlimeBlindBox.Backend.Local
     [Serializable]
     public sealed class PlayerSaveData
     {
-        public const int CurrentSchemaVersion = 1;
+        /// <summary>v2：新增累计开箱次数 totalBoxesOpened。</summary>
+        public const int CurrentSchemaVersion = 2;
 
         public int schemaVersion = CurrentSchemaVersion;
         public string playerId;
@@ -23,6 +24,7 @@ namespace SlimeBlindBox.Backend.Local
         public List<string> pendingBoxRarities = new List<string>();
         public int boxCapacity;
         public long lastBoxAtUnixMs;
+        public int totalBoxesOpened;
         public List<BoxStackSave> boxInventory = new List<BoxStackSave>();
         public List<SlimeSave> slimes = new List<SlimeSave>();
 
