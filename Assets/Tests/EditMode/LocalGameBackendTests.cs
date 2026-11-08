@@ -141,7 +141,7 @@ namespace SlimeBlindBox.Backend.Tests
         [Test]
         public void OpenBoxConsumesStockAndGrantsSlime()
         {
-            random.Enqueue(0); // 领取：白色盲盒
+            // 新玩家初始的 1 个待领取盲盒在创建时以随机数 0 抽中白色。
             Ok<ClaimBoxesResponse>(backend.ClaimBoxes);
             random.Enqueue(0); // 开箱：权重第一位的劣质史莱姆
             var opened = Ok<OpenBoxResponse>((ok, fail) => backend.OpenBox("WHITE", ok, fail));
@@ -182,7 +182,9 @@ namespace SlimeBlindBox.Backend.Tests
         [Test]
         public void ProgressPersistsAcrossSessions()
         {
-            random.Enqueue(9999); // 领取：红色盲盒
+            Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Clear, 0, ok, fail));
+            random.Enqueue(9999); // 产出：红色盲盒
+            Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Add, 1, ok, fail));
             Ok<ClaimBoxesResponse>(backend.ClaimBoxes);
 
             var reloaded = CreateBackend(true);
@@ -263,6 +265,50 @@ namespace SlimeBlindBox.Backend.Tests
             BackendError error = null;
             CreateBackend(true).Login(_ => Assert.Fail(), e => error = e);
             Assert.AreEqual(BackendErrorCodes.SaveVersionTooNew, error.code);
+        }
+
+        [Test]
+        public void PendingBoxRaritiesAreFixedAtProductionAndClaimedAsShown()
+        {
+            Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Clear, 0, ok, fail));
+            random.Enqueue(9999, 0, 5000); // 红、白、绿
+            var state = Ok<GameStateDto>((ok, fail) => backend.DebugModifyBoxes(DebugBoxAction.Add, 3, ok, fail));
+            CollectionAssert.AreEqual(new[] { "RED", "WHITE", "GREEN" }, state.pending_boxes);
+            random.Enqueue(7500, 7500, 7500); // 重新读取或领取都不应重抽品质
+            CollectionAssert.AreEqual(state.pending_boxes, State().pending_boxes);
+
+            var claimed = Ok<ClaimBoxesResponse>(backend.ClaimBoxes).game_state;
+            Assert.AreEqual(1, Stock(claimed, "RED"));
+            Assert.AreEqual(1, Stock(claimed, "WHITE"));
+            Assert.AreEqual(1, Stock(claimed, "GREEN"));
+            Assert.AreEqual(0, Stock(claimed, "BLUE"));
+            Assert.AreEqual(0, claimed.pending_boxes.Length);
+        }
+
+        [Test]
+        public void OfflineProductionRollsRarityForEachNewBox()
+        {
+            random.Enqueue(7500, 9000); // 蓝、紫
+            clock.UtcNow = StartTime.AddHours(6);
+            var state = State();
+            Assert.AreEqual(3, state.box_count);
+            CollectionAssert.AreEqual(new[] { "WHITE", "BLUE", "PURPLE" }, state.pending_boxes);
+        }
+
+        [Test]
+        public void MissingOrInvalidPendingRaritiesAreRepairedOnLoad()
+        {
+            var legacy = store.Inner.Load();
+            legacy.pendingBoxCount = 3;
+            legacy.pendingBoxRarities = new List<string> { "BLUE", "GOLD" };
+            store.Inner.Save(legacy);
+
+            random.Enqueue(9999, 9999);
+            var reloaded = CreateBackend(true);
+            Login(reloaded);
+            var state = Ok<GameStateDto>(reloaded.GetGameState);
+            Assert.AreEqual(3, state.box_count);
+            CollectionAssert.AreEqual(new[] { "BLUE", "RED", "RED" }, state.pending_boxes);
         }
 
         [Test]

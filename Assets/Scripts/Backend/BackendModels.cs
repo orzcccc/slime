@@ -22,6 +22,8 @@ namespace SlimeBlindBox.Backend
     public sealed class GameStateDto
     {
         public int box_count;
+        /// <summary>待领取盲盒的品质键，顺序即凝聚台槽位顺序，长度等于 box_count。</summary>
+        public string[] pending_boxes;
         public int box_capacity;
         public int box_interval_seconds;
         public int total_cp;

@@ -19,6 +19,8 @@ namespace SlimeBlindBox.Backend.Local
         public long createdAtUnixMs;
         public long lastLoginAtUnixMs;
         public int pendingBoxCount;
+        /// <summary>待领取盲盒的品质键，产出时即确定；数量与 pendingBoxCount 一致，旧存档加载时自动补齐。</summary>
+        public List<string> pendingBoxRarities = new List<string>();
         public int boxCapacity;
         public long lastBoxAtUnixMs;
         public List<BoxStackSave> boxInventory = new List<BoxStackSave>();
@@ -31,6 +33,7 @@ namespace SlimeBlindBox.Backend.Local
             if (boxInventory != null) foreach (var stack in boxInventory) if (stack != null) copy.boxInventory.Add(stack.Clone());
             copy.slimes = new List<SlimeSave>();
             if (slimes != null) foreach (var slime in slimes) if (slime != null) copy.slimes.Add(slime.Clone());
+            copy.pendingBoxRarities = pendingBoxRarities != null ? new List<string>(pendingBoxRarities) : new List<string>();
             return copy;
         }
     }

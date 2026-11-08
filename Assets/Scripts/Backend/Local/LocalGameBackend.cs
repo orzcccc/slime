@@ -94,11 +94,9 @@ namespace SlimeBlindBox.Backend.Local
                 var claimed = data.pendingBoxCount;
                 if (claimed <= 0) throw new BackendException(BackendErrorCodes.NoPendingBoxes, BackendMessages.NoPendingBoxes);
 
-                for (var index = 0; index < claimed; index++)
-                {
-                    var box = PickBoxRarity();
-                    GetOrCreateBoxStack(data, box.Key).quantity += 1;
-                }
+                // 品质在产出时已确定，领取只是把凝聚台上看到的盲盒原样放进仓库。
+                foreach (var key in data.pendingBoxRarities) GetOrCreateBoxStack(data, key).quantity += 1;
+                data.pendingBoxRarities.Clear();
                 data.pendingBoxCount = 0;
                 data.lastBoxAtUnixMs = ToUnixMs(now);
                 return new ClaimBoxesResponse { claimed = claimed, game_state = BuildGameState(data, now) };
@@ -221,12 +219,13 @@ namespace SlimeBlindBox.Backend.Local
                         if (amount < GameBalanceConfig.DebugAddMinimum || amount > GameBalanceConfig.DebugAddMaximum)
                             throw new BackendException(BackendErrorCodes.InvalidArgument,
                                 string.Format(BackendMessages.DebugAddRangeFormat, GameBalanceConfig.DebugAddMinimum, GameBalanceConfig.DebugAddMaximum));
-                        data.pendingBoxCount = Math.Min(data.boxCapacity, data.pendingBoxCount + amount);
+                        AddPendingBoxes(data, Math.Min(amount, data.boxCapacity - data.pendingBoxCount));
                         break;
                     case DebugBoxAction.Fill:
-                        data.pendingBoxCount = data.boxCapacity;
+                        AddPendingBoxes(data, data.boxCapacity - data.pendingBoxCount);
                         break;
                     case DebugBoxAction.Clear:
+                        data.pendingBoxRarities.Clear();
                         data.pendingBoxCount = 0;
                         data.lastBoxAtUnixMs = ToUnixMs(now);
                         break;
@@ -311,11 +310,11 @@ namespace SlimeBlindBox.Backend.Local
                 playerId = playerId,
                 nickname = defaultNickname,
                 createdAtUnixMs = nowMs,
-                pendingBoxCount = GameBalanceConfig.InitialPendingBoxCount,
                 boxCapacity = GameBalanceConfig.DefaultBoxCapacity,
                 lastBoxAtUnixMs = nowMs,
             };
             foreach (var box in GameBalanceConfig.BoxRarities) data.boxInventory.Add(new BoxStackSave { key = box.Key });
+            AddPendingBoxes(data, GameBalanceConfig.InitialPendingBoxCount);
             return data;
         }
 
@@ -326,6 +325,13 @@ namespace SlimeBlindBox.Backend.Local
             if (string.IsNullOrEmpty(data.nickname)) data.nickname = defaultNickname;
             if (data.boxCapacity <= 0) data.boxCapacity = GameBalanceConfig.DefaultBoxCapacity;
             data.pendingBoxCount = Math.Max(0, Math.Min(data.boxCapacity, data.pendingBoxCount));
+            // 待领取品质与数量对齐：保留有效记录，旧存档缺少的品质按领取概率补齐，多余记录丢弃。
+            var pendingRarities = new List<string>();
+            foreach (var key in data.pendingBoxRarities ?? new List<string>())
+                if (pendingRarities.Count < data.pendingBoxCount && GameBalanceConfig.FindBoxRarity(key) != null) pendingRarities.Add(key);
+            var missingRarities = data.pendingBoxCount - pendingRarities.Count;
+            data.pendingBoxRarities = pendingRarities;
+            AddPendingBoxes(data, missingRarities);
 
             var stacks = new Dictionary<string, BoxStackSave>();
             foreach (var stack in data.boxInventory ?? new List<BoxStackSave>())
@@ -364,7 +370,7 @@ namespace SlimeBlindBox.Backend.Local
         }
 
         /// <summary>按当前时间结算挂机产出：每个周期 1 个，达到容量后停止并把计时基准推进到当前时间。</summary>
-        private static void SettleBoxes(PlayerSaveData data, DateTime now)
+        private void SettleBoxes(PlayerSaveData data, DateTime now)
         {
             var nowMs = ToUnixMs(now);
             // 系统时间被调回过去时，计时基准不能停留在未来，否则产出会一直停滞。
@@ -379,9 +385,16 @@ namespace SlimeBlindBox.Backend.Local
             var generated = (nowMs - data.lastBoxAtUnixMs) / intervalMs;
             var accepted = (int)Math.Min(generated, data.boxCapacity - data.pendingBoxCount);
             if (accepted <= 0) return;
-            data.pendingBoxCount += accepted;
+            AddPendingBoxes(data, accepted);
             data.lastBoxAtUnixMs += accepted * intervalMs;
             if (data.pendingBoxCount >= data.boxCapacity) data.lastBoxAtUnixMs = nowMs;
+        }
+
+        /// <summary>新增待领取盲盒：品质在产出时按领取权重确定，凝聚台据此显示外观，领取时不再重抽。</summary>
+        private void AddPendingBoxes(PlayerSaveData data, int count)
+        {
+            for (var index = 0; index < count; index++) data.pendingBoxRarities.Add(PickBoxRarity().Key);
+            data.pendingBoxCount = data.pendingBoxRarities.Count;
         }
 
         private GameStateDto BuildGameState(PlayerSaveData data, DateTime now)
@@ -403,6 +416,7 @@ namespace SlimeBlindBox.Backend.Local
             return new GameStateDto
             {
                 box_count = data.pendingBoxCount,
+                pending_boxes = data.pendingBoxRarities.ToArray(),
                 box_capacity = data.boxCapacity,
                 box_interval_seconds = (int)interval.TotalSeconds,
                 total_cp = CalculateTotalCp(data),

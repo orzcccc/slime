@@ -249,7 +249,7 @@ namespace SlimeBlindBox.UI
                 ? MainUiText.PendingUnknown
                 : string.Format(MainUiText.PendingFormat, state.box_count, state.box_capacity);
             uiRefs.claimButton.interactable = !controller.IsBusy && state != null && state.box_count > 0;
-            RenderSlots(state?.box_count ?? 0, state?.box_capacity ?? 0);
+            RenderSlots(state);
 
             boxIntervalSeconds = state != null && state.box_interval_seconds > 0 ? state.box_interval_seconds : DefaultBoxIntervalSeconds;
             nextBoxAt = default;
@@ -265,17 +265,38 @@ namespace SlimeBlindBox.UI
                 uiRefs.timerText.text = MainUiText.SyncingTime;
         }
 
-        private void RenderSlots(int filled, int capacity)
+        /// <summary>凝聚台槽位：已产出的盲盒显示对应品质的宝箱和品质底色，其余为空槽。</summary>
+        private void RenderSlots(GameStateDto state)
         {
             var content = uiRefs.boxSlotContent;
             if (slotPrefab == null || content == null) return;
+            var filled = state?.box_count ?? 0;
+            var capacity = state?.box_capacity ?? 0;
+            var pending = state?.pending_boxes;
             for (var index = content.childCount; index < capacity; index++) Instantiate(slotPrefab, content, false);
             for (var index = 0; index < content.childCount; index++)
             {
                 var slot = content.GetChild(index);
                 slot.gameObject.SetActive(index < capacity);
-                if (index < capacity) slot.GetComponent<BoxSlotItemView>().SetFilled(index < filled);
+                if (index >= capacity) continue;
+                var view = slot.GetComponent<BoxSlotItemView>();
+                if (index >= filled)
+                {
+                    view.SetEmpty();
+                    continue;
+                }
+                var key = pending != null && index < pending.Length ? pending[index] : null;
+                view.SetFilled(GetBoxSprite(key), GetBoxColor(state, key));
             }
+        }
+
+        /// <summary>盲盒品质色取后端下发的仓库条目颜色；找不到时用白色。</summary>
+        private static Color GetBoxColor(GameStateDto state, string key)
+        {
+            if (state?.box_inventory == null || string.IsNullOrEmpty(key)) return Color.white;
+            foreach (var box in state.box_inventory)
+                if (box.key == key && ColorUtility.TryParseHtmlString(box.color, out var color)) return color;
+            return Color.white;
         }
 
         private void RenderWarehouseBadge(GameStateDto state)
