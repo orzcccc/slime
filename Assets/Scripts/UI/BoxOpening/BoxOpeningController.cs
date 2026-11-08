@@ -2,6 +2,7 @@ using System;
 using SlimeBlindBox.App;
 using SlimeBlindBox.Backend;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 namespace SlimeBlindBox.UI
@@ -12,6 +13,7 @@ namespace SlimeBlindBox.UI
         [SerializeField] private BoxWarehouseView warehouse;
         [SerializeField] private ClaimResultView claimResult;
         [SerializeField] private BoxOpeningStageView opening;
+        [SerializeField] private Image popupMaskPrefab;
 
         private SlimeGameController controller;
         private Action homeCallback;
@@ -22,6 +24,8 @@ namespace SlimeBlindBox.UI
         {
             controller = gameController;
             homeCallback = onHome;
+            var mask = Instantiate(popupMaskPrefab, transform, false);
+            mask.transform.SetAsFirstSibling();
             warehouse.Initialize(controller, font, OnWarehouseClosed);
             claimResult.Initialize(font, OnClaimClosed);
             opening.Initialize(controller, font, OnOpeningClosed);

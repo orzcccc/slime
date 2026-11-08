@@ -101,7 +101,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -5228,3 +5228,4 @@ MonoBehaviour:
   probabilityText: {fileID: 5111126639065486185}
   descriptionText: {fileID: 532905902067207980}
   bagButton: {fileID: 4125735376567088237}
+  popupMaskPrefab: {fileID: 8749537697896057312, guid: ad8423f4dfca5559ac2ecd53ba4906d8, type: 3}

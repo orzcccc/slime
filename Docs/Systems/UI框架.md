@@ -84,6 +84,7 @@ XxxPopup                    RectTransform 铺满 + 弹窗脚本
 - 弹窗放 `popupLayer`，打开时调用 `transform.SetAsLastSibling()`。最后打开的弹窗在最上层，接收点击。
 - `mask` 拦截下层所有点击。默认点遮罩**不关闭**；纯信息弹窗可在 `mask` 上加 `Button` 并绑定关闭。
 - 桌面窗口下遮罩覆盖整个 `480×480` 窗口，弹窗打开期间整个窗口都不穿透点击。
+- 仓库/开箱及图鉴已通过序列化字段复用 `UI/Common/PopupMask.prefab`，各初始化一次并置于弹窗根节点的首位；遮罩使用无贴图 Image、Alpha `0.35`、`raycastTarget = true`，面板底图同样接收射线。不可仅加全透明 Image：桌面窗口会过滤全透明图形的射线结果。
 
 ## 六、安全区
 

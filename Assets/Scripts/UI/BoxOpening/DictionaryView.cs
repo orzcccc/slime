@@ -13,6 +13,8 @@ namespace SlimeBlindBox.UI
     {
         private const int PageSize = 12;
 
+        [SerializeField] private Image popupMaskPrefab;
+
         public Button closeButton;
         public GameObject listPage;
         public TMP_Text collectedText;
@@ -63,6 +65,8 @@ namespace SlimeBlindBox.UI
             controller = gameController;
             font = runtimeFont;
             closed = onClosed;
+            var mask = Instantiate(popupMaskPrefab, transform, false);
+            mask.transform.SetAsFirstSibling();
             foreach (var text in GetComponentsInChildren<TMP_Text>(true)) text.font = font;
             for (var i = 0; i < PageSize; i++)
             {
