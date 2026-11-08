@@ -250,21 +250,31 @@ namespace SlimeBlindBox.UI
 
         private void OnScaleSelected(int index)
         {
-            var previous = DesktopWindowController.ScalePercent;
+            var window = DesktopWindowController.Instance;
+            var previous = window != null ? window.AppliedScalePercent : DesktopWindowController.ScalePercent;
             var previousIndex = Array.IndexOf(LocalSettings.ScalePercents, previous);
             if (index < 0 || index >= LocalSettings.ScalePercents.Length) return;
             var percent = LocalSettings.ScalePercents[index];
-            var window = DesktopWindowController.Instance;
-            if (window != null && !window.ApplyScale(percent))
+            if (window == null)
+            {
+                if (!LocalSettings.SetScalePercent(percent))
+                {
+                    scaleSelector.Select(previousIndex);
+                    ShowToast(SettingsUiText.SaveFailed);
+                }
+                return;
+            }
+            if (!window.ApplyScale(percent, succeeded =>
+            {
+                if (succeeded && LocalSettings.SetScalePercent(percent)) return;
+                window.ApplyScale(previous);
+                scaleSelector.Select(previousIndex);
+                ShowToast(succeeded ? SettingsUiText.SaveFailed : SettingsUiText.ApplyFailed);
+            }))
             {
                 scaleSelector.Select(previousIndex);
                 ShowToast(SettingsUiText.ApplyFailed);
-                return;
             }
-            if (LocalSettings.SetScalePercent(percent)) return;
-            if (window != null) window.ApplyScale(previous);
-            scaleSelector.Select(previousIndex);
-            ShowToast(SettingsUiText.SaveFailed);
         }
 
         private void ResetWindowPosition()

@@ -3,6 +3,7 @@
 #endif
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using SlimeBlindBox.App;
@@ -49,6 +50,9 @@ namespace SlimeBlindBox.Desktop
         /// <summary>当前窗口缩放百分比（100/125/150/200）。</summary>
         public static int ScalePercent { get; private set; } = 100;
 
+        /// <summary>最近一次已完成的缩放档位；连续切档失败时回退到此值。</summary>
+        public int AppliedScalePercent { get; private set; } = 100;
+
         /// <summary>当前窗口的实际像素边长。</summary>
         public static int WindowSize => Mathf.RoundToInt(WindowWidth * ScalePercent / 100f);
 
@@ -88,6 +92,7 @@ namespace SlimeBlindBox.Desktop
         {
             Instance = this;
             PositionLocked = LocalSettings.LockPosition;
+            AppliedScalePercent = ScalePercent;
         }
 
         private void OnDestroy()
@@ -154,25 +159,33 @@ namespace SlimeBlindBox.Desktop
 #endif
         }
 
-        /// <summary>按百分比整体缩放窗口与界面，保持中心不变；超出屏幕时挪回所在显示器工作区内。</summary>
-        public bool ApplyScale(int percent)
+        /// <summary>
+        /// 按百分比整体缩放，保持中心并限制在显示器工作区内。
+        /// 返回值表示是否接受请求；Windows 在分辨率和原生样式恢复后回调 onCompleted。
+        /// </summary>
+        public bool ApplyScale(int percent, Action<bool> onCompleted = null)
         {
             if (Array.IndexOf(LocalSettings.ScalePercents, percent) < 0) return false;
 #if SLIME_NATIVE_DESKTOP_WINDOW
             if (windowHandle == IntPtr.Zero || !GetWindowRect(windowHandle, out var rect)) return false;
-            var centerX = (rect.left + rect.right) / 2;
-            var centerY = (rect.top + rect.bottom) / 2;
+            // 连续切档共用第一次切档前的中心；只保留最后一次恢复任务。
+            if (resizeRoutine == null)
+                resizeCenter = new Vector2Int((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+            else StopCoroutine(resizeRoutine);
             ScalePercent = percent;
             var size = WindowSize;
-            var target = new RECT { left = centerX - size / 2, top = centerY - size / 2 };
+            var target = new RECT { left = resizeCenter.x - size / 2, top = resizeCenter.y - size / 2 };
             target.right = target.left + size;
             target.bottom = target.top + size;
             var position = ClampFullyInside(target.left, target.top, MonitorFromRect(ref target, MONITOR_DEFAULTTONEAREST));
+            isDragging = false;
+            // Unity 在帧结束时修改分辨率及窗口样式，同帧 SetWindowPos 会被它覆盖。
             Screen.SetResolution(size, size, FullScreenMode.Windowed);
-            SetWindowPos(windowHandle, IntPtr.Zero, position.x, position.y, size, size, SWP_NOZORDER | SWP_NOACTIVATE);
-            SaveWindowPosition();
+            resizeRoutine = StartCoroutine(RestoreWindowAfterResize(position, size, onCompleted));
 #else
             ScalePercent = percent;
+            AppliedScalePercent = percent;
+            onCompleted?.Invoke(true);
 #endif
             canvasScaleDirty = true;
             return true;
@@ -300,6 +313,10 @@ namespace SlimeBlindBox.Desktop
         private bool isDragging;
         private POINT dragStartCursor;
         private RECT dragStartWindow;
+        private Coroutine resizeRoutine;
+        private Vector2Int resizeCenter;
+        private const float ResizeTimeoutSeconds = 3f;
+        private const int ResizeStableFrames = 2;
 
         private void InitializeNativeWindow()
         {
@@ -316,19 +333,67 @@ namespace SlimeBlindBox.Desktop
 
         private static bool nativeStyleApplied;
 
-        /// <summary>设置无边框样式、DWM 透明和启动位置。只执行一次，重复调用直接返回。</summary>
+        /// <summary>只恢复一次启动位置；窗口样式由可重复调用的 RestoreNativeWindowStyle 设置。</summary>
         private static void ApplyNativeWindowStyle(IntPtr handle)
         {
             if (handle == IntPtr.Zero || nativeStyleApplied) return;
-            nativeStyleApplied = true;
-
-            SetWindowLongPtrCompat(handle, GWL_STYLE, new IntPtr(WS_POPUP | WS_VISIBLE));
-            var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
-            DwmExtendFrameIntoClientArea(handle, ref margins);
-
             var position = ResolveStartupPosition();
-            SetWindowPos(handle, IntPtr.Zero, position.x, position.y, WindowSize, WindowSize,
-                SWP_FRAMECHANGED | SWP_NOZORDER | SWP_SHOWWINDOW);
+            nativeStyleApplied = RestoreNativeWindowStyle(handle, position, WindowSize, true);
+            if (!nativeStyleApplied) Debug.LogWarning("设置无边框透明窗口失败。");
+        }
+
+        /// <summary>保留置顶、显示/隐藏等状态，只恢复无边框、客户区尺寸与 DWM 透明。</summary>
+        private static bool RestoreNativeWindowStyle(IntPtr handle, Vector2Int position, int size, bool show = false)
+        {
+            var style = GetWindowLongPtrCompat(handle, GWL_STYLE).ToInt64();
+            SetWindowLongPtrCompat(handle, GWL_STYLE, new IntPtr((style & ~WS_OVERLAPPEDWINDOW) | WS_POPUP));
+            var restoredStyle = GetWindowLongPtrCompat(handle, GWL_STYLE).ToInt64();
+            var borderless = (restoredStyle & WS_OVERLAPPEDWINDOW) == 0 && (restoredStyle & WS_POPUP) != 0;
+            var flags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
+            if (show) flags |= SWP_SHOWWINDOW;
+            var resized = SetWindowPos(handle, IntPtr.Zero, position.x, position.y, size, size, flags);
+            var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+            var transparent = DwmExtendFrameIntoClientArea(handle, ref margins) == 0;
+            return borderless && resized && transparent;
+        }
+
+        private IEnumerator RestoreWindowAfterResize(Vector2Int position, int size, Action<bool> onCompleted)
+        {
+            // 先跨过提交分辨率的这一帧，再等待 Unity 的实际渲染尺寸更新。
+            yield return null;
+            var deadline = Time.realtimeSinceStartup + ResizeTimeoutSeconds;
+            var stableFrames = 0;
+            while (Time.realtimeSinceStartup < deadline)
+            {
+                // 显示模式切换可能重建 HWND；窗口枚举仅发生在切档期间。
+                var currentHandle = FindUnityWindow();
+                if (currentHandle != IntPtr.Zero && currentHandle != windowHandle)
+                {
+                    windowHandle = currentHandle;
+                    if (!IslandVisible) ShowWindow(windowHandle, SW_HIDE);
+                }
+                if (currentHandle != IntPtr.Zero && Screen.width == size && Screen.height == size
+                    && RestoreNativeWindowStyle(windowHandle, position, size)
+                    && SetAlwaysOnTop(LocalSettings.AlwaysOnTop))
+                {
+                    ConfigureCamera();
+                    // Unity 也可能重置扩展样式，强制同步点击穿透，不能只信任缓存。
+                    SetClickThrough(isClickThrough, true);
+                    if (++stableFrames >= ResizeStableFrames) break;
+                }
+                else stableFrames = 0;
+                yield return null;
+            }
+
+            resizeRoutine = null;
+            var succeeded = stableFrames >= ResizeStableFrames;
+            if (succeeded)
+            {
+                AppliedScalePercent = ScalePercent;
+                SaveWindowPosition();
+            }
+            else Debug.LogWarning("窗口缩放未完成，或无边框透明样式恢复失败。");
+            onCompleted?.Invoke(succeeded);
         }
 
         private void UpdateNativeWindow()
@@ -371,9 +436,9 @@ namespace SlimeBlindBox.Desktop
             SetClickThrough(!overUi);
         }
 
-        private void SetClickThrough(bool enabled)
+        private void SetClickThrough(bool enabled, bool force = false)
         {
-            if (enabled == isClickThrough) return;
+            if (!force && enabled == isClickThrough) return;
             isClickThrough = enabled;
             var exStyle = GetWindowLongPtrCompat(windowHandle, GWL_EXSTYLE).ToInt64();
             exStyle = enabled
@@ -493,7 +558,7 @@ namespace SlimeBlindBox.Desktop
         private const int GWL_STYLE = -16;
         private const int GWL_EXSTYLE = -20;
         private const long WS_POPUP = 0x80000000L;
-        private const long WS_VISIBLE = 0x10000000L;
+        private const long WS_OVERLAPPEDWINDOW = 0x00CF0000L;
         private const long WS_EX_LAYERED = 0x00080000L;
         private const long WS_EX_TRANSPARENT = 0x00000020L;
         private const uint SWP_NOSIZE = 0x0001;
