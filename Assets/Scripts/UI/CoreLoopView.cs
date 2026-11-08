@@ -18,6 +18,7 @@ namespace SlimeBlindBox.UI
 
         private static readonly Color TextColor = new Color32(59, 47, 58, 255);
         private static readonly Color ModeSelectedTextColor = Color.white;
+        private static readonly Color ModeUnselectedTextColor = new Color32(197, 207, 240, 255);
         private static readonly Color AccentDarkColor = new Color32(35, 122, 88, 255);
 
         private static TMP_FontAsset runtimeFont;
@@ -210,8 +211,8 @@ namespace SlimeBlindBox.UI
             uiRefs.boxShowcase.SetActive(!showSlime);
             uiRefs.slimeModeImage.color = showSlime ? Color.white : Color.clear;
             uiRefs.boxModeImage.color = showSlime ? Color.clear : Color.white;
-            uiRefs.slimeModeText.color = showSlime ? ModeSelectedTextColor : TextColor;
-            uiRefs.boxModeText.color = showSlime ? TextColor : ModeSelectedTextColor;
+            uiRefs.slimeModeText.color = showSlime ? ModeSelectedTextColor : ModeUnselectedTextColor;
+            uiRefs.boxModeText.color = showSlime ? ModeUnselectedTextColor : ModeSelectedTextColor;
             if (!save) return;
             PlayerPrefs.SetInt(DisplayModeKey, showSlime ? DisplayModeSlime : DisplayModeBox);
             PlayerPrefs.Save();
