@@ -1,7 +1,7 @@
 # 最小 UI 框架
 
 > 状态：规则已确认；客户端尚未迁移（见“十一、迁移待办”）
-> 最后更新：2026-11-05  
+> 最后更新：2026-11-08
 > 主策划入口：[《史莱姆盲盒》项目策划案](../史莱姆盲盒-项目策划案.md)  
 > 关联代码：`Assets/Scripts/UI/SafeAreaFitter.cs`、`Assets/Scripts/UI/MainUiReferences.cs`、`Assets/Scripts/UI/GameSettingsView.cs`  
 > 关联文档：[预览图生成 UI 预制规则](预览图生成UI预制规则.md)、[桌面岛屿窗口系统](桌面岛屿窗口系统.md)
@@ -10,7 +10,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 参考分辨率 | 预制设计坐标 `800×800`，固定桌面窗口 `480×480`（CanvasScaler 引用分辨率 480×480，等比例 0.6） |
+| 参考分辨率 | 预制设计坐标与 CanvasScaler 引用分辨率均为 `800×800`，默认桌面窗口 `480×480`，统一缩放为 `480/800 = 0.6` |
 | 方向 | 正方形，窗口不可缩放 |
 | CanvasScaler match | `0.5` |
 | 第二种比例检查 | 不适用；高 DPI 缩放规则确定后补充（待确认） |
@@ -38,7 +38,9 @@
 
 - 启动场景里保存一个 `UiRoot` 物体，是场景中唯一的 Canvas。界面预制自身不带 Canvas。
 - `Canvas`：Render Mode = `Screen Space - Overlay`，Pixel Perfect 关闭，Sort Order = 0。
-- `CanvasScaler`：UI Scale Mode = `Scale With Screen Size`，Reference Resolution = `480×480`，Screen Match Mode = `Match Width Or Height`，Match = `0.5`，Reference Pixels Per Unit = `100`。预制按 800×800 设计，在 480×480 窗口中等比缩放到 0.6 倍。
+- `CanvasScaler`：UI Scale Mode = `Scale With Screen Size`，Reference Resolution = `800×800`，Screen Match Mode = `Match Width Or Height`，Match = `0.5`，Reference Pixels Per Unit = `100`。实际窗口为 `480×480` 时，逻辑画布仍为 `800×800`，所有图片、文字、间距、列表和点击区域统一缩放到 `0.6` 倍；原有锚点、布局组件与安全区自适应保持不变。
+- 主界面、仓库、开箱、图鉴、背包、设置共用根 Canvas，不再逐节点乘 `0.6` 或修改 `localScale`，避免重复缩放。Windows 运行时也使用相同的 `800×800` 参考分辨率；没有 CanvasScaler 的根画布按 `WindowSize / 800` 缩放。
+- 设置中的 100/125/150/200% 档位分别对应 480/600/720/960 像素窗口，UI 相对设计坐标的比例分别为 0.6/0.75/0.9/1.2。
 - `GraphicRaycaster`：默认参数。
 - 运行时不修改 `matchWidthOrHeight`。
 - `UiRoot` 下固定两个子节点，全部铺满父节点：
@@ -154,7 +156,7 @@ xxxScroll        ScrollRect（movementType = Clamped）
 - [x] 导入项目字体 `KeinannMaruPOP.ttf`，作为 TMP 动态 SDF 字体资产的源字体；运行时不再依赖系统字体。
 - [x] 用 `KeinannMaruPOP.ttf` 生成动态 SDF TMP 字体资产 `Assets/Resources/Fonts/KeinannMaruPOP SDF.asset`，并将主界面、设置弹窗、背包项、盲盒品质项及运行时动态文本迁移为 `TextMeshProUGUI`。
 - [ ] 核验荆南麦圆体的商用与再分发授权，保存作者授权声明并记入授权清单。
-- [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`。（CanvasScaler 已改为 `480×480`、match `0.5`，仍在预制根节点上）
+- [ ] Canvas 从 `MainUI.prefab` 根节点移到场景 `UiRoot`。（CanvasScaler 参考分辨率保持 `800×800`、match `0.5`，仍在预制根节点上；默认窗口为 `480×480`）
 - [x] 移除 `ResponsiveMainUi` 在运行时修改 match 和锚点的逻辑。
 - [ ] `SafeAreaFitter` 改为按第六节修改 offset。
 - [ ] 节点名改为英文驼峰（例如 `开启盲盒` → `openBoxButton`），同步更新引用。（首页、顶栏、功能坞、背包已完成；背包已改为独立 `InventoryPopup.prefab`；仓库、图鉴页待改）

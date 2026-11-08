@@ -21,9 +21,12 @@ namespace SlimeBlindBox.Desktop
     /// </summary>
     public sealed class DesktopWindowController : MonoBehaviour
     {
-        /// <summary>实际窗口尺寸。界面按 480×480 Canvas 等比缩放，预制仍使用 800×800 设计坐标。</summary>
+        /// <summary>100% 档位的实际窗口尺寸；800×800 设计坐标由 CanvasScaler 统一缩放到 0.6 倍。</summary>
         public const int WindowWidth = 480;
         public const int WindowHeight = 480;
+
+        // 设计尺寸独立于窗口像素；修改窗口大小时不能同步改小参考分辨率。
+        private const float UiReferenceSize = 800f;
 
         private const string PositionXKey = "desktop.window.x";
         private const string PositionYKey = "desktop.window.y";
@@ -213,7 +216,7 @@ namespace SlimeBlindBox.Desktop
         private void ApplyCanvasScale()
         {
 #if SLIME_NATIVE_DESKTOP_WINDOW
-            var factor = ScalePercent / 100f;
+            var factor = WindowSize / UiReferenceSize;
             var found = false;
             foreach (var canvas in FindObjectsOfType<Canvas>())
             {
@@ -223,7 +226,7 @@ namespace SlimeBlindBox.Desktop
                 if (scaler != null)
                 {
                     scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                    scaler.referenceResolution = new Vector2(480, 480);
+                    scaler.referenceResolution = new Vector2(UiReferenceSize, UiReferenceSize);
                     scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
                     scaler.matchWidthOrHeight = .5f;
                 }
