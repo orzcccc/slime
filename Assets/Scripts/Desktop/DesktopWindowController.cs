@@ -317,6 +317,7 @@ namespace SlimeBlindBox.Desktop
         private Vector2Int resizeCenter;
         private const float ResizeTimeoutSeconds = 3f;
         private const int ResizeStableFrames = 2;
+        private const int ResizeClientSizeTolerance = 1;
 
         private void InitializeNativeWindow()
         {
@@ -359,7 +360,7 @@ namespace SlimeBlindBox.Desktop
 
         private IEnumerator RestoreWindowAfterResize(Vector2Int position, int size, Action<bool> onCompleted)
         {
-            // 先跨过提交分辨率的这一帧，再等待 Unity 的实际渲染尺寸更新。
+            // 先跨过提交分辨率的这一帧，再恢复原生窗口；Screen 尺寸读回可能延迟或受 DPI 换算影响。
             yield return null;
             var deadline = Time.realtimeSinceStartup + ResizeTimeoutSeconds;
             var stableFrames = 0;
@@ -372,8 +373,13 @@ namespace SlimeBlindBox.Desktop
                     windowHandle = currentHandle;
                     if (!IslandVisible) ShowWindow(windowHandle, SW_HIDE);
                 }
-                if (currentHandle != IntPtr.Zero && Screen.width == size && Screen.height == size
+                // 不能把 Screen 尺寸相等作为恢复前提，否则已放大的窗口会被误判超时并回退。
+                // 用 SetWindowPos 对应的原生客户区确认结果，允许 DPI 取整产生的 1 像素误差。
+                if (currentHandle != IntPtr.Zero
                     && RestoreNativeWindowStyle(windowHandle, position, size)
+                    && GetClientRect(windowHandle, out var clientRect)
+                    && Math.Abs(clientRect.right - clientRect.left - size) <= ResizeClientSizeTolerance
+                    && Math.Abs(clientRect.bottom - clientRect.top - size) <= ResizeClientSizeTolerance
                     && SetAlwaysOnTop(LocalSettings.AlwaysOnTop))
                 {
                     ConfigureCamera();
@@ -392,7 +398,11 @@ namespace SlimeBlindBox.Desktop
                 AppliedScalePercent = ScalePercent;
                 SaveWindowPosition();
             }
-            else Debug.LogWarning("窗口缩放未完成，或无边框透明样式恢复失败。");
+            else
+            {
+                GetClientRect(windowHandle, out var clientRect);
+                Debug.LogWarning($"窗口缩放未完成：目标 {size}×{size}，客户区 {clientRect.right - clientRect.left}×{clientRect.bottom - clientRect.top}，Unity 读回 {Screen.width}×{Screen.height}。请检查原生窗口样式或系统调用。");
+            }
             onCompleted?.Invoke(succeeded);
         }
 
@@ -600,6 +610,7 @@ namespace SlimeBlindBox.Desktop
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")] private static extern IntPtr SetWindowLongPtr(IntPtr handle, int index, IntPtr value);
         [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr handle, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
         [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr handle, out RECT rect);
+        [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr handle, out RECT rect);
         [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
         [DllImport("user32.dll")] private static extern bool ScreenToClient(IntPtr handle, ref POINT point);
         [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
