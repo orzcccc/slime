@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: game item sprites (treasure chests / blind boxes) for a casual desktop pet game UI, to be cut out
+Input images: Image 1 = finished main screen; match its art style exactly (soft cartoon game art, gentle cel shading, dark navy outlines, glossy highlights, palette of periwinkle blue, dark navy, cyan glow, soft purple). Image 2 = the old chest; keep the general idea of a sturdy rounded treasure chest with a glowing gem lock, but redraw it in the Image 1 style.
+Primary request: six treasure chests of the SAME shape and size, front three-quarter view, arranged in 2 rows x 3 columns with wide even gaps, each chest fully separated from the others.
+Row 1: 1) the default mystery chest: dark navy body with periwinkle blue metal trims and a glowing cyan four-point star emblem on the lock (same star as the filled slot tiles in Image 1); 2) WHITE tier chest: pearl white and light silver trims, pale blue gem; 3) GREEN tier chest: fresh green body, mint trims, green gem.
+Row 2: 4) BLUE tier chest: bright blue body, light blue trims, cyan gem; 5) PURPLE tier chest: violet body, lavender trims, purple gem; 6) RED tier chest: crimson red body with warm gold trims and a red-gold gem, slightly more ornate as the rarest.
+Background: perfectly flat uniform light grey #c8c8c8 everywhere, no shadows, no floor, no gradients, no glow spilling onto the background.
+Constraints: every chest has a closed dark navy outline; no text, no numbers, no labels, no sparkles floating outside the chests, no characters, no watermark.

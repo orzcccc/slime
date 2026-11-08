@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SlimeBlindBox.App;
 using SlimeBlindBox.Backend;
 using UnityEngine;
@@ -26,7 +27,9 @@ namespace SlimeBlindBox.UI
         private MainUiReferences uiRefs;
         private GameObject[] pages;
         private BoxSlotItemView slotPrefab;
-        private Sprite[] boxQualitySprites;
+        /// <summary>盲盒品质外观，按品质键从 Resources/Sprites/MainPage/Props/Box_&lt;KEY&gt; 加载并缓存。</summary>
+        private readonly Dictionary<string, Sprite> boxQualitySprites = new Dictionary<string, Sprite>();
+        private const string BoxSpritePathPrefix = "Sprites/MainPage/Props/Box_";
         private InventoryPopupView inventoryView;
         private BoxOpenAnimator boxAnimator;
         private DateTime nextBoxAt;
@@ -90,14 +93,6 @@ namespace SlimeBlindBox.UI
                 if (runtimeFont != null) text.font = runtimeFont;
 
             slotPrefab = Resources.Load<BoxSlotItemView>("UI/BoxSlotItem");
-            boxQualitySprites = new[]
-            {
-                Resources.Load<Sprite>("icon/宝箱1"),
-                Resources.Load<Sprite>("icon/宝箱2"),
-                Resources.Load<Sprite>("icon/宝箱3"),
-                Resources.Load<Sprite>("icon/宝箱4"),
-                Resources.Load<Sprite>("icon/宝箱5"),
-            };
             pages = new[] { uiRefs.boxPage, uiRefs.dictionaryPage };
 
             uiRefs.claimButton.onClick.AddListener(controller.ClaimBoxes);
@@ -347,15 +342,16 @@ namespace SlimeBlindBox.UI
 
         private Sprite GetBoxSprite(string key)
         {
-            if (boxQualitySprites == null || boxQualitySprites.Length < 5) return null;
-            switch (key)
+            if (string.IsNullOrEmpty(key)) key = "WHITE";
+            if (boxQualitySprites.TryGetValue(key, out var sprite)) return sprite;
+            sprite = Resources.Load<Sprite>(BoxSpritePathPrefix + key);
+            if (sprite == null)
             {
-                case "GREEN": return boxQualitySprites[1];
-                case "BLUE": return boxQualitySprites[2];
-                case "PURPLE": return boxQualitySprites[3];
-                case "RED": return boxQualitySprites[4];
-                default: return boxQualitySprites[0];
+                Debug.LogWarning("缺少盲盒品质外观：" + key);
+                if (key != "WHITE") sprite = GetBoxSprite("WHITE");
             }
+            boxQualitySprites[key] = sprite;
+            return sprite;
         }
 
         private void OpenSelectedBox()
