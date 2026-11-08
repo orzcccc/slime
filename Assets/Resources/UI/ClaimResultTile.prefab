@@ -285,11 +285,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6795342353300429484}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4386ef06bee1c4e47b5206c59183f400, type: 3}
+  m_Script: {fileID: 11500000, guid: 39b66547e2145d239c66b9c4771532f2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   button: {fileID: 2444719135898928732}
   backImage: {fileID: 2740217012530340763}
   frontImage: {fileID: 1913766234142447671}
   flashImage: {fileID: 834624231793623314}
-  emptySprite: {fileID: 21300000, guid: 44763a4337be7555bb3051850a830cf, type: 3}
+  emptySprite: {fileID: 21300000, guid: a44763a4337be7555bb3051850a830cf, type: 3}

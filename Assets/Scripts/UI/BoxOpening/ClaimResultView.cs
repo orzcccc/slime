@@ -23,17 +23,19 @@ namespace SlimeBlindBox.UI
 
         private readonly List<ClaimResultTile> tiles = new List<ClaimResultTile>();
         private Action<ClaimResultExit> closed;
-        private SlimeGameController controller;
+        [SerializeField] private ClaimResultTile tilePrefab;
+        [SerializeField] private Transform tileGrid;
+        private TMP_FontAsset font;
         private Corpus<ClaimResultTile> pool;
         private Coroutine playing;
         private bool shown;
         private string highestKey;
 
-        public void Initialize(SlimeGameController gameController, TMP_FontAsset font, ClaimResultTile tilePrefab, Transform grid, Action<ClaimResultExit> onClosed)
+        public void Initialize(TMP_FontAsset runtimeFont, Action<ClaimResultExit> onClosed)
         {
-            controller = gameController;
+            font = runtimeFont;
             closed = onClosed;
-            pool = new Corpus<ClaimResultTile>(tilePrefab, grid);
+            pool = new Corpus<ClaimResultTile>(tilePrefab, tileGrid);
             foreach (var text in GetComponentsInChildren<TMP_Text>(true)) text.font = font;
             closeButton.onClick.AddListener(() => Close(ClaimResultExit.Home));
             tuckButton.onClick.AddListener(() => Close(ClaimResultExit.Home));
@@ -54,7 +56,7 @@ namespace SlimeBlindBox.UI
             for (var index = 0; index < keys.Length && index < 8; index++)
             {
                 var tile = pool.Get();
-                tile.Bind(BoxVisuals.Sprite(keys[index]), BoxVisuals.Color(keys[index]), BoxVisuals.Name(keys[index]));
+                tile.Bind(BoxVisuals.Sprite(keys[index]), BoxVisuals.Color(keys[index]), keys[index], Skip);
                 var rank = BoxVisuals.Rank(keys[index]);
                 if (rank > highestRank)
                 {
@@ -63,6 +65,7 @@ namespace SlimeBlindBox.UI
                 }
                 tiles.Add(tile);
             }
+            pool.End();
             skipText.gameObject.SetActive(keys.Length > 0);
             openButton.interactable = false;
             flash.SetActive(false);
@@ -83,10 +86,10 @@ namespace SlimeBlindBox.UI
                 tile.Reveal();
                 var key = tile.RarityKey;
                 var rank = BoxVisuals.Rank(key);
-                if (rank >= GameBalanceConfig.FindSlimeRarity("EPIC")?.Rank)
+                if (rank >= BoxVisuals.Rank("PURPLE"))
                 {
                     flash.SetActive(true);
-                    yield return new WaitForSecondsRealtime(rank >= GameBalanceConfig.FindSlimeRarity("LEGENDARY")?.Rank ? .32f : .22f);
+                    yield return new WaitForSecondsRealtime(rank >= BoxVisuals.Rank("RED") ? .32f : .22f);
                     flash.SetActive(false);
                 }
                 else
@@ -108,8 +111,19 @@ namespace SlimeBlindBox.UI
         {
             playing = null;
             shown = true;
+            flash.SetActive(false);
             skipText.gameObject.SetActive(false);
-            openButton.interactable = true;
+            openButton.interactable = tiles.Count > 0;
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape)) Close(ClaimResultExit.Home);
+        }
+
+        private void OnDisable()
+        {
+            playing = null;
         }
 
         private void Close(ClaimResultExit exit)
@@ -127,47 +141,5 @@ namespace SlimeBlindBox.UI
     {
         Home,
         OpenHighest,
-    }
-
-    public sealed class ClaimResultTile : MonoBehaviour
-    {
-        public Button button;
-        public Image backImage;
-        public Image frontImage;
-        public Image flashImage;
-        public Sprite emptySprite;
-        public string RarityKey { get; private set; }
-        private Color rarityColor;
-
-        public void Bind(Sprite front, Color color, string key)
-        {
-            RarityKey = key;
-            rarityColor = color;
-            frontImage.sprite = front;
-            frontImage.color = Color.white;
-            frontImage.gameObject.SetActive(false);
-            backImage.sprite = emptySprite;
-            backImage.gameObject.SetActive(true);
-            transform.localScale = Vector3.one;
-            gameObject.SetActive(true);
-        }
-
-        public void Reveal() => StartCoroutine(Flip());
-        public void RevealInstant()
-        {
-            backImage.gameObject.SetActive(false);
-            frontImage.gameObject.SetActive(true);
-        }
-
-        private IEnumerator Flip()
-        {
-            for (var t = 0f; t < 1f; t += .05f)
-            {
-                transform.localScale = new Vector3(Mathf.Abs(1 - 2 * t), 1, 1);
-                if (t >= .5f) { backImage.gameObject.SetActive(false); frontImage.gameObject.SetActive(true); }
-                yield return new WaitForSecondsRealtime(.025f);
-            }
-            transform.localScale = Vector3.one;
-        }
     }
 }

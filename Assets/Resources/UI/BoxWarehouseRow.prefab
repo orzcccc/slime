@@ -1038,7 +1038,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7888059322232631385}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c79835d6494faf4796fa1de2afaf573, type: 3}
+  m_Script: {fileID: 11500000, guid: 0f6ad5036e345db3b84d71664493f11b, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   button: {fileID: 5779436041793856108}
@@ -1048,9 +1048,13 @@ MonoBehaviour:
   boosterText: {fileID: 5301665495568442896}
   quantityText: {fileID: 7646920974993287562}
   selectedBorder: {fileID: 7020095431089888180}
-  normalSprite: {fileID: 21300000, guid: 9a9dc76cdff95d576f3b6a055b10a02, type: 3}
-  selectedSprite: {fileID: 21300000, guid: 04046340fe2d0907e48dc79a548b077, type: 3}
-  disabledSprite: {fileID: 21300000, guid: 5c763c9212d110273a7eda6ce920183, type: 3}
-  starOn: {fileID: 21300000, guid: c80385e035bc22781c27b9aa029b538, type: 3}
-  starOff: {fileID: 21300000, guid: e991a7717afeb28b3d8966a9756a9b2, type: 3}
-  starImages: ['@BoxWarehouseRow/stars/star1:Image', '@BoxWarehouseRow/stars/star2:Image', '@BoxWarehouseRow/stars/star3:Image', '@BoxWarehouseRow/stars/star4:Image']
+  normalSprite: {fileID: 21300000, guid: 69a9dc76cdff95d576f3b6a055b10a02, type: 3}
+  selectedSprite: {fileID: 21300000, guid: f04046340fe2d0907e48dc79a548b077, type: 3}
+  disabledSprite: {fileID: 21300000, guid: b5c763c9212d110273a7eda6ce920183, type: 3}
+  starOn: {fileID: 21300000, guid: 7c80385e035bc22781c27b9aa029b538, type: 3}
+  starOff: {fileID: 21300000, guid: 4e991a7717afeb28b3d8966a9756a9b2, type: 3}
+  starImages:
+  - {fileID: 6719988055701893146}
+  - {fileID: 6496273754422329737}
+  - {fileID: 5157453273501439610}
+  - {fileID: 5733915461213731484}

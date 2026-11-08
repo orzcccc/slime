@@ -175,7 +175,12 @@ namespace SlimeBlindBox.UI
         private void OnClaimClicked()
         {
             if (controller.IsBusy) return;
-            controller.ClaimBoxes(response => boxOpeningView?.ShowClaim(response), error =>
+            controller.ClaimBoxes(response =>
+            {
+                if (boxOpeningView == null) return;
+                SetHudVisible(false);
+                boxOpeningView.ShowClaim(response);
+            }, error =>
                 uiRefs.messageText.text = error?.message ?? MainUiText.Processing);
         }
 
@@ -209,11 +214,7 @@ namespace SlimeBlindBox.UI
                 Destroy(instance);
                 return;
             }
-            var row = instance.GetComponentInChildren<BoxWarehouseRow>(true);
-            var tile = instance.GetComponentInChildren<ClaimResultTile>(true);
-            var rows = instance.transform.Find("BoxOpeningPopup/warehouse/panel/rows") as RectTransform;
-            var tiles = instance.transform.Find("BoxOpeningPopup/claimResult/panel/tiles") as RectTransform;
-            boxOpeningView.Initialize(controller, runtimeFont, row, rows, tile, tiles, () =>
+            boxOpeningView.Initialize(controller, runtimeFont, () =>
             {
                 SetHudVisible(true);
                 ShowHome();
@@ -240,7 +241,11 @@ namespace SlimeBlindBox.UI
             dictionaryView.Initialize(controller, runtimeFont, exit =>
             {
                 SetHudVisible(true);
-                if (exit == DictionaryExit.Bag) OpenInventory();
+                if (exit == DictionaryExit.Bag)
+                {
+                    OpenInventory();
+                    inventoryView.ShowSlime(dictionaryView.SelectedSlimeId);
+                }
                 else ShowHome();
             });
             instance.SetActive(false);
@@ -276,7 +281,7 @@ namespace SlimeBlindBox.UI
             }
 
             instance.SetActive(false);
-            settingsView.Initialize(controller, runtimeFont, () => isOpeningBox, OnSettingsOpened, OnSettingsClosed,
+            settingsView.Initialize(controller, runtimeFont, () => isOpeningBox || (boxOpeningView != null && boxOpeningView.IsOpening), OnSettingsOpened, OnSettingsClosed,
                 GetComponent<DesktopTrayController>());
             uiRefs.settingsButton.onClick.AddListener(() => settingsView.Show());
         }
@@ -285,6 +290,8 @@ namespace SlimeBlindBox.UI
         private void OnSettingsOpened()
         {
             if (inventoryView != null && inventoryView.gameObject.activeSelf) inventoryView.gameObject.SetActive(false);
+            if (boxOpeningView != null) boxOpeningView.gameObject.SetActive(false);
+            if (dictionaryView != null) dictionaryView.gameObject.SetActive(false);
             ShowHome();
             SetHudVisible(false);
         }

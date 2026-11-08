@@ -5207,7 +5207,7 @@ MonoBehaviour:
   collectedTab: {fileID: 1778394617515116444}
   missingTab: {fileID: 7758767917081124728}
   grid: {fileID: 629310210291409819}
-  entryPrefab: {fileID: 0, guid: 917a1488026fca5970309bff12ce1e4d, type: 3}
+  entryPrefab: {fileID: 1141592988269253292, guid: 917a1488026fca5970309bff12ce1e4d, type: 3}
   emptyState: {fileID: 8406726819332099328}
   emptyText: {fileID: 6723994283877313315}
   previousButton: {fileID: 7727026548998096350}

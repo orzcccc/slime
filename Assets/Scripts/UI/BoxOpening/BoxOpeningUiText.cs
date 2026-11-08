@@ -19,6 +19,7 @@ namespace SlimeBlindBox.UI
         public const string GoIsland = "去岛上领取";
         public const string Opening = "开箱中…";
         public const string Timeout = "开箱超时，请重试";
+        public const string WaitingForResponse = "正在确认开箱结果，可返回仓库等待";
         public const string Retry = "重试";
         public const string BackToWarehouse = "返回仓库";
         public const string OpenAgainFormat = "再开一个";

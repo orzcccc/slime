@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using SlimeBlindBox.App;
 using SlimeBlindBox.Backend;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace SlimeBlindBox.UI
 {
     /// <summary>
     /// M05/M06/M07 开箱：抖动→光束→结果。动画至少 0.8 秒；请求未返回时显示“开箱中…”，
-    /// 超过 5 秒显示重试，失败后盲盒仍保留在仓库中。
+    /// 响应较慢时允许返回仓库，待请求结束后才允许重试，避免重复消耗盲盒。
     /// </summary>
     public sealed class BoxOpeningStageView : MonoBehaviour
     {
@@ -34,30 +33,35 @@ namespace SlimeBlindBox.UI
         public TMP_Text resultCp;
         public TMP_Text resultCpChange;
         public GameObject tagNew;
+        public GameObject actionBar;
+        public Button closeButton;
         public Button backButton;
         public Button againButton;
         public TMP_Text againText;
 
         private SlimeGameController controller;
         private Action<BoxOpeningExit> closed;
-        private Action<string> requestOpen;
         private string key;
         private float startedAt;
         private bool resultReady;
         private bool waiting;
+        private int requestVersion;
         private OpenBoxResponse result;
 
+        public bool IsOpening => gameObject.activeInHierarchy && (waiting || resultReady);
+
         public void Initialize(SlimeGameController gameController, TMP_FontAsset font,
-            Action<string> onRequestOpen, Action<BoxOpeningExit> onClosed)
+            Action<BoxOpeningExit> onClosed)
         {
             controller = gameController;
             closed = onClosed;
-            requestOpen = onRequestOpen;
             foreach (var text in GetComponentsInChildren<TMP_Text>(true)) text.font = font;
             backButton.onClick.AddListener(() => Close(BoxOpeningExit.Warehouse));
+            closeButton.onClick.AddListener(() => Close(BoxOpeningExit.Warehouse));
             againButton.onClick.AddListener(() =>
             {
-                if (result != null && controller.GameState.box_inventory != null)
+                if (waiting || controller.IsBusy) return;
+                if (controller.GameState?.box_inventory != null)
                 {
                     var stack = Array.Find(controller.GameState.box_inventory, b => b.key == key);
                     if (stack != null && stack.quantity > 0)
@@ -73,29 +77,53 @@ namespace SlimeBlindBox.UI
 
         public void StartOpen(string boxKey)
         {
+            if (waiting) return;
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
             key = boxKey;
             result = null;
             resultReady = false;
-            waiting = false;
+            waiting = true;
+            var version = ++requestVersion;
             startedAt = Time.unscaledTime;
             resultPanel.SetActive(false);
             openingState.SetActive(true);
+            actionBar.SetActive(false);
+            closeButton.gameObject.SetActive(false);
             boxImage.gameObject.SetActive(true);
             boxImage.sprite = BoxVisuals.Sprite(key);
             boxImage.color = Color.white;
+            ResetBoxPose();
             rays.color = BoxVisuals.Color(key);
             glow.color = BoxVisuals.Color(key);
             statusText.text = BoxOpeningUiText.Opening;
             againButton.interactable = false;
-            if (requestOpen == null) return;
-            if (!controller.OpenBox(key, OnOpened, OnFailed))
+            // 先置等待状态，再发请求；本地后端可能在调用栈内同步返回。
+            if (!controller.OpenBox(key,
+                response => { if (version == requestVersion) OnOpened(response); },
+                error => { if (version == requestVersion) OnFailed(error); }))
             {
-                ShowRetry();
-                return;
+                waiting = false;
+                ShowRetry(MainUiText.Processing);
             }
-            waiting = true;
+        }
+
+        private void OnEnable()
+        {
+            if (controller != null) controller.StateChanged += RefreshActions;
+        }
+
+        private void OnDisable()
+        {
+            if (controller != null) controller.StateChanged -= RefreshActions;
+            requestVersion++;
+            waiting = false;
+            resultReady = false;
+        }
+
+        private void RefreshActions()
+        {
+            againButton.interactable = !waiting && !resultReady && !controller.IsBusy;
         }
 
         public void OnOpened(OpenBoxResponse response)
@@ -110,31 +138,45 @@ namespace SlimeBlindBox.UI
         {
             resultReady = false;
             waiting = false;
-            statusText.text = error?.message ?? BoxOpeningUiText.Timeout;
-            ShowRetry();
+            ShowRetry(error?.message ?? BoxOpeningUiText.Timeout);
         }
 
         private void Update()
         {
             if (!gameObject.activeSelf) return;
-            if (waiting)
+            if (Input.GetKeyDown(KeyCode.Escape) && closeButton.gameObject.activeSelf)
             {
-                var t = (Time.unscaledTime - startedAt) / MinimumAnimationSeconds;
+                Close(BoxOpeningExit.Warehouse);
+                return;
+            }
+            if (waiting || resultReady)
+            {
+                var elapsed = Time.unscaledTime - startedAt;
+                var t = Mathf.Clamp01(elapsed / MinimumAnimationSeconds);
                 boxImage.rectTransform.localScale = Vector3.one * (1 + .04f * Mathf.Sin(t * 40f));
                 boxImage.rectTransform.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(t * 55f) * 6f * (1 - t));
                 rays.rectTransform.localRotation = Quaternion.Euler(0, 0, Time.unscaledTime * 12f);
                 rays.color = new Color(rays.color.r, rays.color.g, rays.color.b, .55f + .45f * Mathf.PingPong(Time.unscaledTime * 2f, 1f));
-                if (Time.unscaledTime - startedAt > TimeoutSeconds && !resultReady) ShowRetry();
+                if (elapsed > TimeoutSeconds && !resultReady && !actionBar.activeSelf)
+                    ShowRetry(BoxOpeningUiText.WaitingForResponse);
             }
             if (resultReady && !resultPanel.activeSelf && Time.unscaledTime - startedAt >= MinimumAnimationSeconds) ShowResult();
         }
 
-        private void ShowRetry()
+        private void ShowRetry(string message)
         {
-            waiting = false;
-            statusText.text = BoxOpeningUiText.Timeout;
-            againButton.interactable = true;
+            statusText.text = message;
+            actionBar.SetActive(true);
+            closeButton.gameObject.SetActive(true);
             againText.text = BoxOpeningUiText.Retry;
+            ResetBoxPose();
+            RefreshActions();
+        }
+
+        private void ResetBoxPose()
+        {
+            boxImage.rectTransform.localScale = Vector3.one;
+            boxImage.rectTransform.localRotation = Quaternion.identity;
         }
 
         private void ShowResult()
@@ -142,6 +184,8 @@ namespace SlimeBlindBox.UI
             resultReady = false;
             openingState.SetActive(false);
             resultPanel.SetActive(true);
+            actionBar.SetActive(true);
+            closeButton.gameObject.SetActive(true);
             var rarityColor = RarityStyle.Parse(result.rarity_color);
             var high = InventoryListQuery.RarityRank(result.rarity_key) >= 7;
             resultRibbon.color = rarityColor;
@@ -154,9 +198,11 @@ namespace SlimeBlindBox.UI
             resultCp.text = string.Format(BoxOpeningUiText.CpFormat, result.unit_effective_cp);
             resultCpChange.text = string.Format(BoxOpeningUiText.CpChangeFormat, result.total_cp_before, result.game_state.total_cp);
             resultGlow.SetActive(high);
+            ring.gameObject.SetActive(high);
+            sparkle.gameObject.SetActive(high);
             glow.color = rarityColor;
             rays.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, .75f);
-            againButton.interactable = true;
+            RefreshActions();
             var stack = Array.Find(result.game_state.box_inventory, b => b.key == key);
             againText.text = stack != null && stack.quantity > 0 ? BoxOpeningUiText.OpenAgainFormat : BoxOpeningUiText.ChangeBox;
         }

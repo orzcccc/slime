@@ -151,6 +151,19 @@ namespace SlimeBlindBox.UI
             Render();
         }
 
+        /// <summary>从图鉴进入对应史莱姆详情，清除可能隐藏目标的品质筛选。</summary>
+        public void ShowSlime(int slimeId)
+        {
+            appliedFilter.Clear();
+            pendingFilter.Clear();
+            Render();
+            var index = visible.FindIndex(item => item.slime_id == slimeId);
+            if (index < 0) return;
+            pageIndex = index / PageSize;
+            Render();
+            OpenDetail(index);
+        }
+
         public void OnScroll(PointerEventData eventData)
         {
             if (!listPage.activeSelf || LayerOpen) return;

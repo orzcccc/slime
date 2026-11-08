@@ -56,6 +56,8 @@ namespace SlimeBlindBox.UI
         private int page;
         private int detailId = -1;
 
+        public int SelectedSlimeId => detailId;
+
         public void Initialize(SlimeGameController gameController, TMP_FontAsset runtimeFont, Action<DictionaryExit> onClosed)
         {
             controller = gameController;
@@ -98,9 +100,19 @@ namespace SlimeBlindBox.UI
             transform.SetAsLastSibling();
             page = 0;
             filter = Filter.All;
+            detailId = -1;
             detailPage.SetActive(false);
             listPage.SetActive(true);
             Refresh();
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (detailPage.activeSelf) CloseDetail();
+                else Close(DictionaryExit.Home);
+            }
         }
 
         private void Refresh()

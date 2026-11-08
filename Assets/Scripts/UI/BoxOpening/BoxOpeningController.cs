@@ -2,7 +2,6 @@ using System;
 using SlimeBlindBox.App;
 using SlimeBlindBox.Backend;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 namespace SlimeBlindBox.UI
@@ -17,27 +16,49 @@ namespace SlimeBlindBox.UI
         private SlimeGameController controller;
         private Action homeCallback;
 
-        public void Initialize(SlimeGameController gameController, TMP_FontAsset font,
-            BoxWarehouseRow rowPrefab, Transform rowList, ClaimResultTile tilePrefab, Transform tileGrid,
-            Action onHome)
+        public bool IsOpening => opening.IsOpening;
+
+        public void Initialize(SlimeGameController gameController, TMP_FontAsset font, Action onHome)
         {
             controller = gameController;
             homeCallback = onHome;
             warehouse.Initialize(controller, font, OnWarehouseClosed);
-            var row = Instantiate(rowPrefab, rowList, false);
-            row.gameObject.SetActive(false);
-            claimResult.Initialize(controller, font, tilePrefab, tileGrid, OnClaimClosed);
-            opening.Initialize(controller, font, OnRequestOpen, OnOpeningClosed);
+            claimResult.Initialize(font, OnClaimClosed);
+            opening.Initialize(controller, font, OnOpeningClosed);
         }
 
         public void ShowWarehouse(string preferredKey = null)
         {
+            ShowPage(warehouse.gameObject);
             warehouse.Show(preferredKey);
         }
 
         public void ShowClaim(ClaimBoxesResponse response)
         {
+            ShowPage(claimResult.gameObject);
             claimResult.Show(response);
+        }
+
+        private void ShowPage(GameObject page)
+        {
+            warehouse.gameObject.SetActive(false);
+            claimResult.gameObject.SetActive(false);
+            opening.gameObject.SetActive(false);
+            gameObject.SetActive(true);
+            transform.SetAsLastSibling();
+            page.SetActive(true);
+        }
+
+        private void ShowOpening(string key)
+        {
+            ShowPage(opening.gameObject);
+            opening.StartOpen(key);
+        }
+
+        private void ReturnHome()
+        {
+            gameObject.SetActive(false);
+            homeCallback?.Invoke();
         }
 
         private void OnWarehouseClosed(BoxWarehouseExit exit)
@@ -45,13 +66,13 @@ namespace SlimeBlindBox.UI
             switch (exit)
             {
                 case BoxWarehouseExit.OpenBox:
-                    opening.StartOpen(warehouse.SelectedKey);
+                    ShowOpening(warehouse.SelectedKey);
                     break;
                 case BoxWarehouseExit.Island:
-                    homeCallback?.Invoke();
+                    ReturnHome();
                     break;
                 default:
-                    homeCallback?.Invoke();
+                    ReturnHome();
                     break;
             }
         }
@@ -60,10 +81,11 @@ namespace SlimeBlindBox.UI
         {
             if (exit == ClaimResultExit.OpenHighest)
             {
-                var key = claimResult.HighestBoxKey ?? "WHITE";
-                opening.StartOpen(key);
+                var key = claimResult.HighestBoxKey;
+                if (key != null) ShowOpening(key);
+                else ShowWarehouse();
             }
-            else homeCallback?.Invoke();
+            else ReturnHome();
         }
 
         private void OnOpeningClosed(BoxOpeningExit exit)
@@ -71,9 +93,5 @@ namespace SlimeBlindBox.UI
             ShowWarehouse();
         }
 
-        private void OnRequestOpen(string key)
-        {
-            if (!controller.OpenBox(key, opening.OnOpened, opening.OnFailed)) opening.OnFailed(null);
-        }
     }
 }

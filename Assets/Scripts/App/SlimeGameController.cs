@@ -74,7 +74,11 @@ namespace SlimeBlindBox.App
                 End();
                 RefreshCollections();
                 onSuccess?.Invoke(response);
-            }, Fail);
+            }, error =>
+            {
+                Fail(error);
+                onError?.Invoke(error);
+            });
             return true;
         }
 
@@ -89,7 +93,11 @@ namespace SlimeBlindBox.App
                 LastMessage = string.Format(MainUiText.ClaimedFormat, response.claimed);
                 End();
                 onSuccess?.Invoke(response);
-            }, Fail);
+            }, error =>
+            {
+                Fail(error);
+                onError?.Invoke(error);
+            });
             return true;
         }
 

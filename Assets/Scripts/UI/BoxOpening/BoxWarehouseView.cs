@@ -20,8 +20,11 @@ namespace SlimeBlindBox.UI
         public GameObject probabilityLayer;
         public Button probabilityClose;
         public RectTransform probabilityContent;
+        [SerializeField] private TMP_Text probabilityLinePrefab;
 
         private readonly List<BoxWarehouseRow> rows = new List<BoxWarehouseRow>();
+        private readonly List<TMP_Text> probabilityLines = new List<TMP_Text>();
+        private int usedProbabilityLines;
         private SlimeGameController controller;
         private TMP_FontAsset font;
         private Action<BoxWarehouseExit> closed;
@@ -48,6 +51,25 @@ namespace SlimeBlindBox.UI
             transform.SetAsLastSibling();
             probabilityLayer.SetActive(false);
             Render(preferredKey);
+        }
+
+        private void OnEnable()
+        {
+            if (controller != null) controller.StateChanged += RefreshStock;
+        }
+
+        private void OnDisable()
+        {
+            if (controller != null) controller.StateChanged -= RefreshStock;
+        }
+
+        private void RefreshStock() => Render(selectedKey);
+
+        private void Update()
+        {
+            if (!Input.GetKeyDown(KeyCode.Escape)) return;
+            if (probabilityLayer.activeSelf) probabilityLayer.SetActive(false);
+            else Close(BoxWarehouseExit.Home);
         }
 
         private void Render(string preferredKey)
@@ -106,7 +128,7 @@ namespace SlimeBlindBox.UI
             selectedText.text = item != null && hasStock
                 ? string.Format(BoxOpeningUiText.SelectedFormat, item.name + "盲盒", string.Format(BoxOpeningUiText.QuantityFormat, item.quantity))
                 : BoxOpeningUiText.GoIsland;
-            openButton.interactable = hasStock && !controller.IsBusy;
+            openButton.interactable = !hasStock || !controller.IsBusy;
             openButton.GetComponentInChildren<TMP_Text>().text = hasStock ? BoxOpeningUiText.OpenOne : BoxOpeningUiText.GoIsland;
         }
 
@@ -118,38 +140,39 @@ namespace SlimeBlindBox.UI
                 Close(BoxWarehouseExit.Island);
                 return;
             }
-            closed?.Invoke(BoxWarehouseExit.OpenBox);
+            if (!controller.IsBusy) Close(BoxWarehouseExit.OpenBox);
         }
 
         private void ShowProbability()
         {
-            for (var i = probabilityContent.childCount - 1; i >= 0; i--) Destroy(probabilityContent.GetChild(i).gameObject);
-            var header = ProbabilityLine(BoxOpeningUiText.ProbabilityHeader, 15, true);
+            usedProbabilityLines = 0;
+            ProbabilityLine(BoxOpeningUiText.ProbabilityHeader, 15, true);
             foreach (var box in GameBalanceConfig.BoxRarities)
             {
-                var title = ProbabilityLine(box.Name + "盲盒", 14, true);
+                ProbabilityLine(box.Name + "盲盒", 14, true);
                 var parts = new List<string>();
                 var probabilities = GameBalanceConfig.RarityProbabilities(box.Key);
                 for (var i = 0; i < GameBalanceConfig.SlimeRarities.Count; i++)
-                    if (probabilities[i] >= .00005) parts.Add(GameBalanceConfig.SlimeRarities[i].Name + " " + probabilities[i].ToString("P1"));
+                    if (probabilities[i] > 0) parts.Add(GameBalanceConfig.SlimeRarities[i].Name + " " + probabilities[i].ToString("0.######%"));
                 ProbabilityLine(string.Join(" · ", parts), 12, false);
             }
             ProbabilityLine(BoxOpeningUiText.ProbabilityNote, 11, false, "#9fb3db");
+            for (var i = usedProbabilityLines; i < probabilityLines.Count; i++) probabilityLines[i].gameObject.SetActive(false);
             probabilityLayer.SetActive(true);
         }
 
         private TMP_Text ProbabilityLine(string value, int size, bool bold, string color = "#eef1ff")
         {
-            var go = new GameObject("Line", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-            go.transform.SetParent(probabilityContent, false);
-            var text = go.GetComponent<TextMeshProUGUI>();
+            if (usedProbabilityLines >= probabilityLines.Count)
+                probabilityLines.Add(Instantiate(probabilityLinePrefab, probabilityContent, false));
+            var text = probabilityLines[usedProbabilityLines++];
+            text.gameObject.SetActive(true);
             text.font = font;
             text.text = value;
             text.fontSize = size;
             text.color = RarityStyle.Parse(color);
             text.enableWordWrapping = true;
             text.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
-            go.GetComponent<LayoutElement>().preferredHeight = size + 8;
             return text;
         }
 
@@ -165,51 +188,5 @@ namespace SlimeBlindBox.UI
         Home,
         Island,
         OpenBox,
-    }
-
-    public sealed class BoxWarehouseRow : MonoBehaviour
-    {
-        public Button button;
-        public Image background;
-        public Image icon;
-        public TMP_Text nameText;
-        public TMP_Text boosterText;
-        public TMP_Text quantityText;
-        public GameObject selectedBorder;
-        [SerializeField] private Sprite normalSprite;
-        [SerializeField] private Sprite selectedSprite;
-        [SerializeField] private Sprite disabledSprite;
-        [SerializeField] private Sprite starOn;
-        [SerializeField] private Sprite starOff;
-        [SerializeField] private Image[] starImages;
-
-        public void Bind(BoxInventoryItemDto item, bool active, Action onClick)
-        {
-            icon.sprite = BoxVisuals.Sprite(item.key);
-            icon.color = active ? Color.white : new Color(1, 1, 1, .35f);
-            nameText.text = item.name + "盲盒";
-            nameText.color = active ? Color.white : new Color(.7f, .75f, .85f, .55f);
-            quantityText.text = item.quantity > 9999 ? BoxOpeningUiText.QuantityCap : string.Format(BoxOpeningUiText.QuantityFormat, item.quantity);
-            quantityText.color = active ? new Color32(201, 214, 240, 255) : new Color(1, 1, 1, .3f);
-            var stars = BoxVisuals.Rank(item.key);
-            boosterText.text = stars <= 0 ? BoxOpeningUiText.BoosterPrefix + " " + BoxOpeningUiText.BoosterNone : BoxOpeningUiText.BoosterPrefix;
-            for (var i = 0; i < starImages.Length; i++)
-            {
-                starImages[i].gameObject.SetActive(i < stars);
-                starImages[i].sprite = i < stars ? starOn : starOff;
-                starImages[i].color = active ? Color.white : new Color(1, 1, 1, .35f);
-            }
-            background.sprite = active ? normalSprite : disabledSprite;
-            button.interactable = active;
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => onClick());
-            selectedBorder.SetActive(false);
-        }
-
-        public void SetSelected(bool selected)
-        {
-            background.sprite = selected ? selectedSprite : (button.interactable ? normalSprite : disabledSprite);
-            selectedBorder.SetActive(selected);
-        }
     }
 }

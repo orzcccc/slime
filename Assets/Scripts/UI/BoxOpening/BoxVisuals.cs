@@ -52,8 +52,6 @@ namespace SlimeBlindBox.UI
         {
             this.template = template;
             this.parent = parent;
-            items.Add(template);
-            template.gameObject.SetActive(false);
         }
 
         public void Begin() { used = 0; }
